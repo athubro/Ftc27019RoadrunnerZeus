@@ -6,7 +6,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-@TeleOp(name = "ZeusTeleOPBlue", group = "TeleOp")
+@TeleOp(name = "ZeusTeleOPBlue v1", group = "TeleOp")
 public class ZeusTeleOPBlue extends LinearOpMode {
 
     private Turret turret;

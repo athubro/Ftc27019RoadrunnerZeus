@@ -28,14 +28,14 @@ public final class Turret {
         public static final double PID_INTERVAL = 0.1;
 
         // PID Coefficients
-        public double kP = 50.0;
+        public double kP = 29.0;
         public double kI = 0.0;
         public double kD = 0.0;
-        public double kF = 10.0;
+        public double kF = 25.5;
 
         // Motor Parameters
         public static final double TICKS_PER_REV = 28.0;
-        public double toleranceRPM = 70.0;
+        public double toleranceRPM = 100.0;
 
         // Vision Parameters
         public int TARGET_TAG_ID = 20;
@@ -105,9 +105,9 @@ public final class Turret {
         this.drive = new MecanumDrive(hardwareMap, initialPose);
 
         // Initialize hardware
-        leftFlywheel = hardwareMap.get(DcMotorEx.class, "left motor");
-        rightFlywheel = hardwareMap.get(DcMotorEx.class, "right motor");
-        turretAngle = hardwareMap.get(Servo.class, "TurretAngle");
+        leftFlywheel = hardwareMap.get(DcMotorEx.class, "leftFlywheel");
+        rightFlywheel = hardwareMap.get(DcMotorEx.class, "rightFlywheel");
+        turretAngle = hardwareMap.get(Servo.class, "shooterAngle");
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         dashboard = FtcDashboard.getInstance();
 
@@ -540,10 +540,10 @@ public final class Turret {
 
         if (tagFound) {
             // Cubic polynomial formula: 0.00284*x³ - 0.343*x² + 23.8*x + 2022
-            targetRPM = 0.00284 * x * x * x - 0.343 * x * x + 23.8 * x + 2022;
+            targetRPM = 0.00284 * x * x * x - 0.343 * x * x + 23.8 * x + 1022;
 
             // Clamp RPM to safe operating range
-            targetRPM = clamper(targetRPM, 2300, 3180);
+            targetRPM = clamper(targetRPM, 1500, 3180);
         }
     }
 

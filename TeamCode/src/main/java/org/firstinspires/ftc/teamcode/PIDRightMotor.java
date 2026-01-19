@@ -11,10 +11,10 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Config
-@TeleOp(name = "PIDF One motor", group ="TeleOP")
-public class PIDOneMotor extends LinearOpMode {
+@TeleOp(name = "PIDF Right motor", group ="TeleOP")
+public class PIDRightMotor extends LinearOpMode {
 
-    private DcMotorEx leftMotor;
+    private DcMotorEx rightMotor;
 
 
     public static double kP = 29.0;
@@ -41,19 +41,19 @@ public class PIDOneMotor extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
-        leftMotor = hardwareMap.get(DcMotorEx.class, "leftFlywheel");
+        rightMotor = hardwareMap.get(DcMotorEx.class, "rightFlywheel");
 
 
 
-        leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
 
-        leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
 
+        rightMotor.setDirection(DcMotor.Direction.REVERSE);
 
-
-        leftMotor.setVelocityPIDFCoefficients(kP, kI, kD, kF);
+        rightMotor.setVelocityPIDFCoefficients(kP, kI, kD, kF);
 
 
         FtcDashboard dashboard = FtcDashboard.getInstance();
@@ -68,7 +68,7 @@ public class PIDOneMotor extends LinearOpMode {
 
         while (opModeIsActive()) {
 
-            leftMotor.setVelocityPIDFCoefficients(kP, kI, kD, kF );
+            rightMotor.setVelocityPIDFCoefficients(kP, kI, kD, kF );
 
 
             double targetVelocity = (targetRPM / 60.0) * TICKS_PER_REV;
@@ -112,7 +112,7 @@ public class PIDOneMotor extends LinearOpMode {
                 recoveryTimer.reset();
             }
 
-            double leftRPM = (leftMotor.getVelocity() / TICKS_PER_REV) * 60.0;
+            double rightRPM = (rightMotor.getVelocity() / TICKS_PER_REV) * 60.0;
 
 
             if (isRecoveryTest) {
@@ -120,31 +120,31 @@ public class PIDOneMotor extends LinearOpMode {
 
                 if (elapsed < 5.0) {
                     // Set velocity to 0 for 2 seconds
-                    leftMotor.setVelocity(0);
+                    rightMotor.setVelocity(0);
 
                 } else {
                     // Spin back up
-                    leftMotor.setVelocity(targetVelocity);
+                    rightMotor.setVelocity(targetVelocity);
 
 
                     // Check if both motors have reached 95% of target
-                    double avgRPM = (leftRPM) / 1.0;
+                    double avgRPM = (rightRPM) / 1.0;
                     if (avgRPM >= targetRPM) {
                         recoveryTime = elapsed - 5.0; // Subtract the stop time
                         isRecoveryTest = false;
                     }
                 }
             } else if (gamepad1.right_trigger > 0.1) {
-                leftMotor.setVelocity(targetVelocity);
+                rightMotor.setVelocity(targetVelocity);
 
             } else {
-                leftMotor.setVelocity(0);
+                rightMotor.setVelocity(0);
 
             }
 
             TelemetryPacket packet = new TelemetryPacket();
             packet.put("Target RPM", targetRPM);
-            packet.put("Left RPM", leftRPM);
+            packet.put("Left RPM", rightRPM);
 
             packet.put("kP", kP);
             packet.put("kF", kF);
@@ -153,7 +153,7 @@ public class PIDOneMotor extends LinearOpMode {
             dashboard.sendTelemetryPacket(packet);
 
             telemetry.addData("Target RPM", targetRPM);
-            telemetry.addData("Left RPM", "%.1f", leftRPM);
+            telemetry.addData("Left RPM", "%.1f", rightRPM);
 
             telemetry.addData("kP", "%.5f", kP);
             telemetry.addData("kF", "%.5f", kF);

@@ -16,13 +16,14 @@ public class PIDSetup extends LinearOpMode {
 
     private DcMotorEx leftMotor;
     private DcMotorEx rightMotor;
+    private DcMotorEx intake;
 
-    public static double kP = 0.25;
+    public static double kP = 13.6;
     public static double kI = 0;
     public static double kD = 0.0;
-    public static double kF = 12.35;
+    public static double kF = 30.5;
 
-    public static double targetRPM = 4500;
+    public static double targetRPM = 3150;
     public static double TICKS_PER_REV = 28.0;
 
     // ---- tuning helpers ----
@@ -43,6 +44,7 @@ public class PIDSetup extends LinearOpMode {
 
         leftMotor = hardwareMap.get(DcMotorEx.class, "leftFlywheel");
         rightMotor = hardwareMap.get(DcMotorEx.class, "rightFlywheel");
+        intake = hardwareMap.get(DcMotorEx.class, "intake");
 
 
         leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -68,7 +70,7 @@ public class PIDSetup extends LinearOpMode {
 
         while (opModeIsActive()) {
 
-            leftMotor.setVelocityPIDFCoefficients(kP, kI, kD, kF );
+            leftMotor.setVelocityPIDFCoefficients(kP, kI, kD, kF);
             rightMotor.setVelocityPIDFCoefficients(kP, kI, kD, kF);
 
             double targetVelocity = (targetRPM / 60.0) * TICKS_PER_REV;
@@ -106,62 +108,69 @@ public class PIDSetup extends LinearOpMode {
             if (gamepad1.yWasPressed()) targetRPM += 50;
             if (gamepad1.aWasPressed()) targetRPM -= 50;
 
-            // ---- RECOVERY TEST ----
-            if (gamepad1.xWasPressed() && !isRecoveryTest) {
-                isRecoveryTest = true;
-                recoveryTimer.reset();
+            if (gamepad2.left_trigger > 0.1) {
+                intake.setPower(gamepad2.left_trigger);
+            } else {
+                intake.setPower(0);
             }
 
-            double leftRPM = (leftMotor.getVelocity() / TICKS_PER_REV) * 60.0;
-            double rightRPM = (rightMotor.getVelocity() / TICKS_PER_REV) * 60.0;
 
-            if (isRecoveryTest) {
-                double elapsed = recoveryTimer.seconds();
+                // ---- RECOVERY TEST ----
+                if (gamepad1.xWasPressed() && !isRecoveryTest) {
+                    isRecoveryTest = true;
+                    recoveryTimer.reset();
+                }
 
-                if (elapsed < 5.0) {
-                    // Set velocity to 0 for 2 seconds
-                    leftMotor.setVelocity(0);
-                    rightMotor.setVelocity(0);
-                } else {
-                    // Spin back up
+                double leftRPM = (leftMotor.getVelocity() / TICKS_PER_REV) * 60.0;
+                double rightRPM = (rightMotor.getVelocity() / TICKS_PER_REV) * 60.0;
+
+                if (isRecoveryTest) {
+                    double elapsed = recoveryTimer.seconds();
+
+                    if (elapsed < 5.0) {
+                        // Set velocity to 0 for 2 seconds
+                        leftMotor.setVelocity(0);
+                        rightMotor.setVelocity(0);
+                    } else {
+                        // Spin back up
+                        leftMotor.setVelocity(targetVelocity);
+                        rightMotor.setVelocity(targetVelocity);
+
+                        // Check if both motors have reached 95% of target
+                        double avgRPM = (leftRPM + rightRPM) / 2.0;
+                        if (avgRPM >= targetRPM) {
+                            recoveryTime = elapsed - 5.0; // Subtract the stop time
+                            isRecoveryTest = false;
+                        }
+                    }
+                } else if (gamepad1.right_trigger > 0.1) {
                     leftMotor.setVelocity(targetVelocity);
                     rightMotor.setVelocity(targetVelocity);
-
-                    // Check if both motors have reached 95% of target
-                    double avgRPM = (leftRPM + rightRPM) / 2.0;
-                    if (avgRPM >= targetRPM) {
-                        recoveryTime = elapsed - 5.0; // Subtract the stop time
-                        isRecoveryTest = false;
-                    }
+                } else {
+                    leftMotor.setVelocity(0);
+                    rightMotor.setVelocity(0);
                 }
-            } else if (gamepad1.right_trigger > 0.1) {
-                leftMotor.setVelocity(targetVelocity);
-                rightMotor.setVelocity(targetVelocity);
-            } else {
-                leftMotor.setVelocity(0);
-                rightMotor.setVelocity(0);
-            }
 
-            TelemetryPacket packet = new TelemetryPacket();
-            packet.put("Target RPM", targetRPM);
-            packet.put("Left RPM", leftRPM);
-            packet.put("Right RPM", rightRPM);
-            packet.put("kP", kP);
-            packet.put("kF", kF);
-            packet.put("Recovery Time (s)", recoveryTime);
-            packet.put("Testing", isRecoveryTest);
-            dashboard.sendTelemetryPacket(packet);
+                TelemetryPacket packet = new TelemetryPacket();
+                packet.put("Target RPM", targetRPM);
+                packet.put("Left RPM", leftRPM);
+                packet.put("Right RPM", rightRPM);
+                packet.put("kP", kP);
+                packet.put("kF", kF);
+                packet.put("Recovery Time (s)", recoveryTime);
+                packet.put("Testing", isRecoveryTest);
+                dashboard.sendTelemetryPacket(packet);
 
-            telemetry.addData("Target RPM", targetRPM);
-            telemetry.addData("Left RPM", "%.1f", leftRPM);
-            telemetry.addData("Right RPM", "%.1f", rightRPM);
-            telemetry.addData("kP", "%.5f", kP);
-            telemetry.addData("kF", "%.5f", kF);
-            telemetry.addData("Recovery Time", "%.2f s", recoveryTime);
-            if (isRecoveryTest) {
-                telemetry.addLine(">> RECOVERY TEST RUNNING <<");
+                telemetry.addData("Target RPM", targetRPM);
+                telemetry.addData("Left RPM", "%.1f", leftRPM);
+                telemetry.addData("Right RPM", "%.1f", rightRPM);
+                telemetry.addData("kP", "%.5f", kP);
+                telemetry.addData("kF", "%.5f", kF);
+                telemetry.addData("Recovery Time", "%.2f s", recoveryTime);
+                if (isRecoveryTest) {
+                    telemetry.addLine(">> RECOVERY TEST RUNNING <<");
+                }
+                telemetry.update();
             }
-            telemetry.update();
         }
     }
-}

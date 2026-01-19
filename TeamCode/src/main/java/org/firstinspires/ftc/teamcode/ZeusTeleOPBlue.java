@@ -71,22 +71,24 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             // =========================
 
             // Toggle tracking mode (A button)
-            if (gamepad2.a && !trackingToggleLast) {
+            if (gamepad2.aWasPressed()) {
                 turret.setTrackingMode(!turret.trackingMode);
-            }
-            trackingToggleLast = gamepad2.a;
-
-            // Toggle auto RPM (X button)
-            if (gamepad2.x && !autoRPMToggleLast) {
+                turret.setAutoAngleEnabled(!turret.autoAngleEnabled);
                 turret.setAutoRPMEnabled(!turret.autoRPMEnabled);
             }
-            autoRPMToggleLast = gamepad2.x;
+
+
+            // Toggle auto RPM (X button)
+            if (gamepad2.xWasPressed()) {
+
+            }
+
 
             // Toggle auto angle (Y button)
-            if (gamepad2.y && !autoAngleToggleLast) {
-                turret.setAutoAngleEnabled(!turret.autoAngleEnabled);
+            if (gamepad2.yWasPressed()) {
+
             }
-            autoAngleToggleLast = gamepad2.y;
+
 
             // Enable/disable shooting with triggers
             if (gamepad2.right_trigger > 0.2) {
@@ -105,9 +107,9 @@ public class ZeusTeleOPBlue extends LinearOpMode {
 
 
             // Manual turret angle control (D-pad left/right)
-            if (gamepad2.dpad_right) {
+            if (gamepad2.dpadRightWasPressed()) {
                 turret.setTurretAngleCommand(1);
-            } else if (gamepad2.dpad_left) {
+            } else if (gamepad2.dpadLeftWasPressed()) {
                 turret.setTurretAngleCommand(-1);
             } else {
                 turret.setTurretAngleCommand(0);
@@ -127,18 +129,18 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             }
 
             // Gate control
-            if (gamepad2.right_bumper) {
+            if (gamepad2.rightBumperWasPressed()) {
                 intake.openGate();
             }
-            if (gamepad2.left_bumper) {
+            if (gamepad2.leftBumperWasPressed()) {
                 intake.closeGate();
             }
 
             // Toggle gate (B button)
-            if (gamepad2.b && !gateToggleLast) {
+            if (gamepad2.bWasPressed()) {
                 intake.toggleGate();
             }
-            gateToggleLast = gamepad2.b;
+
 
             // =========================
             // UPDATE ALL SYSTEMS

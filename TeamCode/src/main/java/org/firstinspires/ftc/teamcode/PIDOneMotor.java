@@ -15,7 +15,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class PIDOneMotor extends LinearOpMode {
 
     private DcMotorEx leftMotor;
-    private DcMotorEx rightMotor;
+
 
     public static double kP = 0.25;
     public static double kI = 0;
@@ -136,10 +136,10 @@ public class PIDOneMotor extends LinearOpMode {
                 }
             } else if (gamepad1.right_trigger > 0.1) {
                 leftMotor.setVelocity(targetVelocity);
-                rightMotor.setVelocity(targetVelocity);
+
             } else {
                 leftMotor.setVelocity(0);
-                rightMotor.setVelocity(0);
+
             }
 
             TelemetryPacket packet = new TelemetryPacket();

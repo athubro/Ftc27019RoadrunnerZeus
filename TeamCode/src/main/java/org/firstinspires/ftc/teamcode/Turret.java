@@ -92,6 +92,7 @@ public final class Turret {
     // Heading control
     public double headingCorrection = 0.0; // Output for robot heading adjustment
     public double errorAngleDeg = 0.0;
+    private boolean hasAligned = false;   // Track if robot has aligned once
 
     // Speed check
     private double speedCheckTimer = 0.0;
@@ -104,9 +105,9 @@ public final class Turret {
         this.drive = new MecanumDrive(hardwareMap, initialPose);
 
         // Initialize hardware
-        leftFlywheel = hardwareMap.get(DcMotorEx.class, "leftFlywheel");
-        rightFlywheel = hardwareMap.get(DcMotorEx.class, "rightFlywheel");
-        turretAngle = hardwareMap.get(Servo.class, "turretAngle");
+        leftFlywheel = hardwareMap.get(DcMotorEx.class, "left motor");
+        rightFlywheel = hardwareMap.get(DcMotorEx.class, "right motor");
+        turretAngle = hardwareMap.get(Servo.class, "TurretAngle");
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         dashboard = FtcDashboard.getInstance();
 
@@ -207,6 +208,10 @@ public final class Turret {
      */
     public void setTrackingMode(boolean enabled) {
         this.trackingMode = enabled;
+        // Reset alignment flag when tracking mode is toggled
+        if (enabled) {
+            hasAligned = false;  // Allow new alignment when tracking is re-enabled
+        }
     }
 
     /**
@@ -246,6 +251,13 @@ public final class Turret {
     public void setTurretAnglePosition(double pos) {
         this.turretAnglePos = clamper(pos, 0.0, 1.0);
         turretAngle.setPosition(turretAnglePos);
+    }
+
+    /**
+     * Check if robot has aligned to target
+     */
+    public boolean isAligned() {
+        return hasAligned;
     }
 
     /**
@@ -479,7 +491,7 @@ public final class Turret {
 
     /**
      * Calculate heading correction for robot to align with target
-     * This output is automatically applied when using update(forward, strafe, rotation)
+     * Aligns once, then stops tracking until tracking mode is toggled again
      */
     private void updateHeadingControl() {
         if (!tagFound) {
@@ -487,9 +499,16 @@ public final class Turret {
             return;
         }
 
+        // If already aligned once, stop tracking
+        if (hasAligned) {
+            headingCorrection = 0.0;
+            return;
+        }
+
         // Check if within tolerance
         if (Math.abs(errorAngleDeg) <= Params.TOLERANCE_DEG) {
             headingCorrection = 0.0;
+            hasAligned = true;  // Mark as aligned - stop tracking
             return;
         }
 

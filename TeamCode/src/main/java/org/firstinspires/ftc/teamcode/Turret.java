@@ -28,14 +28,14 @@ public final class Turret {
         public static final double PID_INTERVAL = 0.1;
 
         // PID Coefficients
-        public double kP = 29.0;
+        public double kP = 50.0;
         public double kI = 0.0;
         public double kD = 0.0;
-        public double kF = 25.5;
+        public double kF = 10.0;
 
         // Motor Parameters
         public static final double TICKS_PER_REV = 28.0;
-        public double toleranceRPM = 100.0;
+        public double toleranceRPM = 70.0;
 
         // Vision Parameters
         public int TARGET_TAG_ID = 20;
@@ -60,9 +60,8 @@ public final class Turret {
 
     // ==================== DISTANCE MEASUREMENT ====================
     public final double ATHeight = 29.5; // AprilTag height in inches
-    public final double LimelightHeight = 11.75; // Limelight height in inches
-    public final double LimelightAngle = 22.77; // degrees from horizontal
-
+    public final double LimelightHeight = 13.5; // Limelight height in inches
+    public final double LimelightAngle = 23; // degrees from horizontal
     public double disToAprilTag = 0;
     public double ATAngle = 0;
     public boolean tagFound = false;
@@ -363,8 +362,8 @@ public final class Turret {
 
         // Determine final rotation: use tracking correction if active, otherwise use driver input
         double finalRotation = rotationInput;
-        if (trackingMode && tagFound) {
-            finalRotation = headingCorrection;
+        if (trackingMode && tagFound && !hasAligned) {
+            finalRotation = -headingCorrection;
         }
 
         // Apply drive powers
@@ -447,6 +446,7 @@ public final class Turret {
         packet.put("Left RPM", currentRPMLeft);
         packet.put("Right RPM", currentRPMRight);
         packet.put("Target RPM", targetRPM);
+        packet.put("ATAngle", ATAngle);
         packet.put("Up to Speed", flywheelUpToSpeed);
         packet.put("Shooting Enabled", shootingEnabled);
         packet.put("Tag Found", tagFound);
@@ -454,6 +454,9 @@ public final class Turret {
         packet.put("Tracking Error (deg)", errorAngleDeg);
         packet.put("Heading Correction", headingCorrection);
         packet.put("Turret Angle Pos", turretAnglePos);
+        packet.put("LL TX (deg)", errorAngleDeg);
+        packet.put("LL TY (deg)", ATAngle);
+        packet.put("Has Aligned", hasAligned);
 
         dashboard.sendTelemetryPacket(packet);
 
@@ -466,6 +469,10 @@ public final class Turret {
         telemetry.addData("Tag Found", tagFound);
         telemetry.addData("Tracking Error", "%.1f°", errorAngleDeg);
         telemetry.addData("Turret Angle", "%.2f", turretAnglePos);
+        telemetry.addData("LL TX", "%.2f°", errorAngleDeg);
+        telemetry.addData("LL TY", "%.2f°", ATAngle);
+        telemetry.addData("Heading Correction", "%.3f", headingCorrection);
+        telemetry.addData("Has Aligned", hasAligned);
     }
 
     /**
@@ -490,8 +497,8 @@ public final class Turret {
     }
 
     /**
-     * Calculate heading correction for robot to align with target
-     * Aligns once, then stops tracking until tracking mode is toggled again
+     * SIMPLIFIED: Calculate heading correction to align with target
+     * Simply rotate to zero out the error angle
      */
     private void updateHeadingControl() {
         if (!tagFound) {
@@ -512,13 +519,19 @@ public final class Turret {
             return;
         }
 
-        // Calculate proportional correction
-        double proportionalPower = Params.KP_HEADING * Math.abs(errorAngleDeg);
-        proportionalPower = clamper(proportionalPower, Params.MIN_HEADING_POWER, Params.MAX_HEADING_POWER);
+        // SIMPLIFIED APPROACH: Direct proportional control
+        // errorAngleDeg is the angle we need to rotate
+        // Positive errorAngleDeg = target is RIGHT, need to rotate RIGHT (positive)
+        // Negative errorAngleDeg = target is LEFT, need to rotate LEFT (negative)
 
-        // Positive error = target is to the right, robot should turn right (positive correction)
-        // Negative error = target is to the left, robot should turn left (negative correction)
-        headingCorrection = (errorAngleDeg > 0) ? proportionalPower : -proportionalPower;
+        double proportionalPower = PARAMS.KP_HEADING * errorAngleDeg;
+
+        // Clamp the power to safe limits
+        if (proportionalPower > 0) {
+            headingCorrection = clamper(proportionalPower, Params.MIN_HEADING_POWER, Params.MAX_HEADING_POWER);
+        } else {
+            headingCorrection = clamper(proportionalPower, -Params.MAX_HEADING_POWER, -Params.MIN_HEADING_POWER);
+        }
     }
 
     /**
@@ -526,8 +539,7 @@ public final class Turret {
      */
     private void measureDistance() {
         if (tagFound) {
-            disToAprilTag = (ATHeight - LimelightHeight) /
-                    Math.tan((ATAngle + LimelightAngle) * (Math.PI / 180));
+            disToAprilTag = (ATHeight - LimelightHeight) / Math.tan((ATAngle + LimelightAngle) * (Math.PI / 180));
         }
     }
 
@@ -540,10 +552,10 @@ public final class Turret {
 
         if (tagFound) {
             // Cubic polynomial formula: 0.00284*x³ - 0.343*x² + 23.8*x + 2022
-            targetRPM = 0.00284 * x * x * x - 0.343 * x * x + 23.8 * x + 1022;
+            targetRPM = 0.00284 * x * x * x - 0.343 * x * x + 23.8 * x + 2022;
 
             // Clamp RPM to safe operating range
-            targetRPM = clamper(targetRPM, 1500, 3180);
+            targetRPM = clamper(targetRPM, 2300, 3180);
         }
     }
 

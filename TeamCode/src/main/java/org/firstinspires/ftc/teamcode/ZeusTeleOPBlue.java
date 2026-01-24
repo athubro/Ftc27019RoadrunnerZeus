@@ -75,6 +75,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
                 turret.setTrackingMode(!turret.trackingMode);
                 turret.setAutoAngleEnabled(!turret.autoAngleEnabled);
                 turret.setAutoRPMEnabled(!turret.autoRPMEnabled);
+
             }
 
 
@@ -166,6 +167,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             telemetry.addData("Tag Found", turret.isTagFound() ? "YES" : "NO");
             telemetry.addData("Distance", "%.1f in", turret.getDistanceToTarget());
             telemetry.addData("Tracking Error", "%.1f°", turret.getTrackingError());
+            telemetry.addData("AT Angle", "%.1f°", turret.ATAngle);
 
             telemetry.addLine();
             telemetry.addLine("=== SHOOTER ===");

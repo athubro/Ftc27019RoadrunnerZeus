@@ -18,8 +18,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 /**
- * Turret subsystem - non-blocking tracking, manual control works correctly.
- * Public API kept the same as before.
+ * Turret subsystem - with moveable turret base for aiming
  */
 public final class Turret {
 
@@ -41,10 +40,36 @@ public final class Turret {
         public int TARGET_TAG_ID = 20;
         public static final double TOLERANCE_DEG = 1.0;
 
-        // Robot Heading Control
-        public static final double KP_HEADING = 0.015;
-        public static final double MIN_HEADING_POWER = 0.03;
-        public static final double MAX_HEADING_POWER = 0.25;
+        // Turret Yaw Control (servo aiming)
+        public static final double KP_TURRET = 0.01; // Reduced from 0.015 for smoother tracking
+        public static final double MIN_TURRET_POWER = 0.03;
+        public static final double BASE_TURRET_POWER = 0.25;
+        public double aimTolerance = 1.0; // Increased deadband to prevent jitter
+
+        // Turret Gear Calculations:
+        // Small gear: 285 ticks per 360° = 39 teeth
+        // Big gear: 160 teeth
+        // Gear ratio: 160/39 = 4.1026:1
+        // Big gear rotation per small gear rev: 360° / 4.1026 = 87.75°
+        // Ticks per degree (big gear): 285 / 87.75 = 3.247 ticks/deg
+        public static final double SMALL_GEAR_TEETH = 39.0;
+        public static final double BIG_GEAR_TEETH = 160.0;
+        public static final double TICKS_PER_SMALL_REV = 285.0;
+        public static final double GEAR_RATIO = BIG_GEAR_TEETH / SMALL_GEAR_TEETH; // 4.1026
+        public static final double BIG_GEAR_DEG_PER_SMALL_REV = 360.0 / GEAR_RATIO; // 87.75°
+        public static final double TICKS_PER_BIG_GEAR_DEGREE = TICKS_PER_SMALL_REV / BIG_GEAR_DEG_PER_SMALL_REV; // 3.247
+
+        // Servo position per degree (assuming 180° total servo range = 1.0 position range)
+        public double posPerDegree = 1.0 / 180.0; // 0.00556 position units per degree
+
+        // Smooth tracking parameters
+        public double maxServoChange = 0.05; // Maximum servo position change per update (prevents large jumps)
+        public double servoSmoothingFactor = 0.3; // 0.0 = no smoothing, 1.0 = full smoothing
+
+        // OLD: Robot Heading Control (COMMENTED OUT - NOW USING TURRET BASE)
+        // public static final double KP_HEADING = 0.015;
+        // public static final double MIN_HEADING_POWER = 0.03;
+        // public static final double MAX_HEADING_POWER = 0.25;
     }
 
     public Params PARAMS = new Params();
@@ -53,6 +78,7 @@ public final class Turret {
     public final DcMotorEx leftFlywheel;
     public final DcMotorEx rightFlywheel;
     public final Servo turretAngle;       // Servo controlling turret up/down angle
+    public final Servo turretAim;         // Servo for turret yaw (left/right aiming)
     public final Limelight3A limelight;
     public final FtcDashboard dashboard;
     public final Telemetry telemetry;
@@ -61,7 +87,7 @@ public final class Turret {
     // ==================== DISTANCE MEASUREMENT ====================
     public final double ATHeight = 29.5; // AprilTag height in inches
     public final double LimelightHeight = 13.5; // Limelight height in inches
-    public final double LimelightAngle = 23; // degrees from horizontal
+    public final double LimelightAngle = 20; // degrees from horizontal
     public double disToAprilTag = 0;
     public double ATAngle = 0;
     public boolean tagFound = false;
@@ -77,21 +103,32 @@ public final class Turret {
     public double targetRPM = 3000.0;
     public boolean flywheelUpToSpeed = false;
 
-    // Turret angle state
+    // Turret angle state (up/down)
     public double turretAnglePos = 0.5;   // Servo position (0.0 to 1.0)
     public int turretAngleCommand = 0;    // Manual control: -1 down, 0 stop, +1 up
     private static final double TURRET_ANGLE_STEP = 0.009;
     public boolean autoAngleEnabled = false; // Automatically calculate angle from distance
 
+    // Turret aiming state (left/right yaw)
+    public double turretAimPos = 0.5;     // Servo position for yaw (0.0 to 1.0)
+    public double targetTurretPos = 0.5;  // Target position for smoothing
+    public double lastTurretPos = 0.5;    // Last position for rate limiting
+    public double targetAngle = 0;        // Target angle offset for compensation
+    public boolean adjustAiming = false;  // Flag to adjust aiming once
+
     // Control flags
     public boolean shootingEnabled = false;
     public boolean autoRPMEnabled = false; // Automatically calculate RPM from distance
-    public boolean trackingMode = false; // Auto-track target with robot heading
+    public boolean trackingMode = false; // Auto-track target with turret servo
+    public boolean continuousTracking = true; // NEW: Enable continuous tracking (not just once)
 
-    // Heading control
-    public double headingCorrection = 0.0; // Output for robot heading adjustment
+    // Tracking state
     public double errorAngleDeg = 0.0;
-    private boolean hasAligned = false;   // Track if robot has aligned once
+    private boolean hasAligned = false;   // Track if turret has aligned once
+
+    // OLD: Heading control (COMMENTED OUT - NOW USING TURRET BASE)
+    // public double headingCorrection = 0.0; // Output for robot heading adjustment
+    // private boolean hasAligned = false;
 
     // Speed check
     private double speedCheckTimer = 0.0;
@@ -107,6 +144,7 @@ public final class Turret {
         leftFlywheel = hardwareMap.get(DcMotorEx.class, "leftFlywheel");
         rightFlywheel = hardwareMap.get(DcMotorEx.class, "rightFlywheel");
         turretAngle = hardwareMap.get(Servo.class, "shooterAngle");
+        turretAim = hardwareMap.get(Servo.class, "turretAim"); // NEW: Turret yaw servo
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         dashboard = FtcDashboard.getInstance();
 
@@ -126,8 +164,10 @@ public final class Turret {
         leftFlywheel.setVelocityPIDFCoefficients(PARAMS.kP, PARAMS.kI, PARAMS.kD, PARAMS.kF * 0.98);
         rightFlywheel.setVelocityPIDFCoefficients(PARAMS.kP * 1.05, PARAMS.kI, PARAMS.kD, PARAMS.kF);
 
-        // Initialize turret angle to middle position
+        // Initialize servos to middle position
         turretAngle.setPosition(turretAnglePos);
+        turretAim.setPosition(turretAimPos);
+        lastTurretPos = turretAimPos; // Initialize last position
 
         // Start limelight polling
         limelight.setPollRateHz(100);
@@ -139,188 +179,128 @@ public final class Turret {
 
     // ==================== PUBLIC API ====================
 
-    /**
-     * Enable or disable the flywheel shooting
-     */
     public void setShootingEnabled(boolean enabled) {
         this.shootingEnabled = enabled;
     }
 
-    /**
-     * Set the target RPM for the flywheel
-     */
     public void setTargetRPM(double rpm) {
         this.targetRPM = rpm;
     }
 
-    /**
-     * Get the current flywheel RPM
-     */
     public double getCurrentRPMLeft() {
         return currentRPMLeft;
     }
 
-    /**
-     * Get the current right flywheel RPM
-     */
     public double getCurrentRPMRight() {
         return currentRPMRight;
     }
 
-    /**
-     * Get the target RPM
-     */
     public double getTargetRPM() {
         return targetRPM;
     }
 
-    /**
-     * Check if flywheel is up to speed
-     */
     public boolean isUpToSpeed() {
         return flywheelUpToSpeed;
     }
 
-    /**
-     * Enable or disable automatic RPM calculation based on distance
-     */
     public void setAutoRPMEnabled(boolean enabled) {
         this.autoRPMEnabled = enabled;
     }
 
-    /**
-     * Get the calculated distance to AprilTag
-     */
     public double getDistanceToTarget() {
         return disToAprilTag;
     }
 
-    /**
-     * Check if AprilTag target is found
-     */
     public boolean isTagFound() {
         return tagFound;
     }
 
-    /**
-     * Enable or disable tracking mode (robot heading adjustment)
-     */
     public void setTrackingMode(boolean enabled) {
         this.trackingMode = enabled;
-        // Reset alignment flag when tracking mode is toggled
         if (enabled) {
-            hasAligned = false;  // Allow new alignment when tracking is re-enabled
+            hasAligned = false;
+            adjustAiming = true;  // Enable aiming adjustment when tracking starts
+        } else {
+            adjustAiming = false;
+            hasAligned = false;
         }
     }
 
-    /**
-     * Get the heading correction value for robot movement
-     * Positive = turn right, Negative = turn left
-     */
-    public double getHeadingCorrection() {
-        return headingCorrection;
+    public void setContinuousTracking(boolean enabled) {
+        this.continuousTracking = enabled;
     }
 
-    /**
-     * Get the current tracking error in degrees
-     */
     public double getTrackingError() {
         return errorAngleDeg;
     }
 
-    /**
-     * Set turret angle command for manual control
-     * @param cmd -1 for down, 0 for stop, +1 for up
-     */
     public void setTurretAngleCommand(int cmd) {
         this.turretAngleCommand = cmd;
     }
 
-    /**
-     * Enable or disable automatic angle calculation based on distance
-     */
     public void setAutoAngleEnabled(boolean enabled) {
         this.autoAngleEnabled = enabled;
     }
 
-    /**
-     * Manually set turret angle position
-     * @param pos Position from 0.0 to 1.0
-     */
     public void setTurretAnglePosition(double pos) {
         this.turretAnglePos = clamper(pos, 0.0, 1.0);
         turretAngle.setPosition(turretAnglePos);
     }
 
-    /**
-     * Check if robot has aligned to target
-     */
     public boolean isAligned() {
         return hasAligned;
     }
 
-    /**
-     * Get current turret angle position
-     */
     public double getTurretAnglePosition() {
         return turretAnglePos;
     }
 
-    /**
-     * Get the MecanumDrive instance for advanced control
-     */
+    public double getTurretAimPosition() {
+        return turretAimPos;
+    }
+
+    public void setTurretAimPosition(double pos) {
+        this.turretAimPos = clamper(pos, 0.0, 1.0);
+        turretAim.setPosition(turretAimPos);
+    }
+
     public MecanumDrive getDrive() {
         return drive;
     }
 
-    /**
-     * Set drive powers directly (bypasses tracking)
-     * @param powers PoseVelocity2d containing linear and angular velocities
-     */
     public void setDrivePowers(PoseVelocity2d powers) {
         drive.setDrivePowers(powers);
     }
 
-    /**
-     * Update pose estimate from drive localizer
-     * @return Current robot velocity
-     */
     public PoseVelocity2d updatePoseEstimate() {
         return drive.updatePoseEstimate();
     }
 
-    /**
-     * Get current robot pose
-     */
     public Pose2d getPose() {
         return drive.localizer.getPose();
     }
 
-    /**
-     * Set robot pose (for localization)
-     */
     public void setPose(Pose2d pose) {
         drive.localizer.setPose(pose);
     }
 
     // ==================== MAIN UPDATE ====================
 
-    /**
-     * Main update loop - call this once per loop iteration
-     * Now also updates drive systems
-     */
     public void update() {
-        // Update vision tracking and distance measurement
         updateVisionTracking();
 
-        // Calculate heading correction if tracking mode enabled
+        // NEW: Update turret aiming instead of robot heading
         if (trackingMode) {
-            updateHeadingControl();
-        } else {
-            headingCorrection = 0.0;
+            updateTurretAiming();
         }
 
-        // Calculate target RPM and angle based on distance if auto mode enabled
+        // OLD: Robot heading control (COMMENTED OUT)
+        // if (trackingMode) {
+        //     updateHeadingControl();
+        // } else {
+        //     headingCorrection = 0.0;
+        // }
+
         if (tagFound) {
             if (autoRPMEnabled) {
                 calcTargetRPM();
@@ -330,49 +310,38 @@ public final class Turret {
             }
         }
 
-        // Update turret angle (manual or auto)
         updateTurretAngle();
-
-        // Update PID control
         pidUpdate();
-
-        // Update drive pose estimation
         drive.updatePoseEstimate();
-
-        // Send telemetry
         sendTelemetry();
     }
 
-    /**
-     * Update with driver inputs - handles both driving and turret control
-     * @param forwardInput Driver forward/back input (left stick Y)
-     * @param strafeInput Driver strafe input (left stick X)
-     * @param rotationInput Driver rotation input (right stick X)
-     */
     public void update(double forwardInput, double strafeInput, double rotationInput) {
-        // Update vision tracking and distance measurement
         updateVisionTracking();
 
-        // Calculate heading correction if tracking mode enabled
+        // NEW: Update turret aiming instead of robot heading
         if (trackingMode) {
-            updateHeadingControl();
-        } else {
-            headingCorrection = 0.0;
+            updateTurretAiming();
         }
 
-        // Determine final rotation: use tracking correction if active, otherwise use driver input
-        double finalRotation = rotationInput;
-        if (trackingMode && tagFound && !hasAligned) {
-            finalRotation = -headingCorrection;
-        }
+        // OLD: Robot heading control (COMMENTED OUT)
+        // if (trackingMode) {
+        //     updateHeadingControl();
+        // } else {
+        //     headingCorrection = 0.0;
+        // }
 
-        // Apply drive powers
+        // double finalRotation = rotationInput;
+        // if (trackingMode && tagFound && !hasAligned) {
+        //     finalRotation = headingCorrection;
+        // }
+
+        // NEW: Just pass through rotation - no auto heading adjustment
         drive.setDrivePowers(new PoseVelocity2d(
                 new Vector2d(forwardInput, strafeInput),
-                finalRotation
+                rotationInput  // Direct passthrough - turret aims instead
         ));
 
-        // Calculate target RPM and angle based on distance if auto mode enabled
         if (tagFound) {
             if (autoRPMEnabled) {
                 calcTargetRPM();
@@ -382,40 +351,26 @@ public final class Turret {
             }
         }
 
-        // Update turret angle (manual or auto)
         updateTurretAngle();
-
-        // Update PID control
         pidUpdate();
-
-        // Update drive pose estimation
         drive.updatePoseEstimate();
-
-        // Send telemetry
         sendTelemetry();
     }
 
     // ==================== PRIVATE METHODS ====================
 
-    /**
-     * PID update for flywheel velocity control
-     */
     private void pidUpdate() {
         if (pidTimer.seconds() < Params.PID_INTERVAL) return;
         pidTimer.reset();
 
-        // Calculate target velocity in ticks per second
         double targetVelocity = (targetRPM / 60.0) * Params.TICKS_PER_REV;
 
-        // Get current velocities
         double leftVelocity = leftFlywheel.getVelocity();
         double rightVelocity = rightFlywheel.getVelocity();
 
-        // Convert to RPM for display/tolerance checking
         currentRPMLeft = (leftVelocity / Params.TICKS_PER_REV) * 60.0;
         currentRPMRight = (rightVelocity / Params.TICKS_PER_REV) * 60.0;
 
-        // Check if both flywheels are up to speed
         double errorLeft = Math.abs(targetRPM - currentRPMLeft);
         double errorRight = Math.abs(targetRPM - currentRPMRight);
 
@@ -428,7 +383,6 @@ public final class Turret {
             flywheelUpToSpeed = false;
         }
 
-        // Apply motor velocity if shooting is enabled
         if (shootingEnabled) {
             leftFlywheel.setVelocity(targetVelocity);
             rightFlywheel.setVelocity(targetVelocity);
@@ -438,21 +392,17 @@ public final class Turret {
         }
     }
 
-    /**
-     * Send telemetry data to dashboard
-     */
     private void sendTelemetry() {
         TelemetryPacket packet = new TelemetryPacket();
         packet.put("Left RPM", currentRPMLeft);
         packet.put("Right RPM", currentRPMRight);
         packet.put("Target RPM", targetRPM);
-        packet.put("ATAngle", ATAngle);
         packet.put("Up to Speed", flywheelUpToSpeed);
         packet.put("Shooting Enabled", shootingEnabled);
         packet.put("Tag Found", tagFound);
         packet.put("Distance to Target", disToAprilTag);
         packet.put("Tracking Error (deg)", errorAngleDeg);
-        packet.put("Heading Correction", headingCorrection);
+        packet.put("Turret Aim Pos", turretAimPos);
         packet.put("Turret Angle Pos", turretAnglePos);
         packet.put("LL TX (deg)", errorAngleDeg);
         packet.put("LL TY (deg)", ATAngle);
@@ -460,7 +410,6 @@ public final class Turret {
 
         dashboard.sendTelemetryPacket(packet);
 
-        // Also send to driver station telemetry
         telemetry.addData("Left RPM", "%.0f", currentRPMLeft);
         telemetry.addData("Right RPM", "%.0f", currentRPMRight);
         telemetry.addData("Target RPM", "%.0f", targetRPM);
@@ -468,16 +417,13 @@ public final class Turret {
         telemetry.addData("Distance", "%.1f in", disToAprilTag);
         telemetry.addData("Tag Found", tagFound);
         telemetry.addData("Tracking Error", "%.1f°", errorAngleDeg);
+        telemetry.addData("Turret Aim", "%.2f", turretAimPos);
         telemetry.addData("Turret Angle", "%.2f", turretAnglePos);
         telemetry.addData("LL TX", "%.2f°", errorAngleDeg);
         telemetry.addData("LL TY", "%.2f°", ATAngle);
-        telemetry.addData("Heading Correction", "%.3f", headingCorrection);
         telemetry.addData("Has Aligned", hasAligned);
     }
 
-    /**
-     * Update vision tracking and measure distance to AprilTag
-     */
     private void updateVisionTracking() {
         tagFound = false;
         errorAngleDeg = 0.0;
@@ -497,97 +443,122 @@ public final class Turret {
     }
 
     /**
-     * SIMPLIFIED: Calculate heading correction to align with target
-     * Simply rotate to zero out the error angle
+     * NEW: Update turret aiming servo to track target - CONTINUOUS SMOOTH TRACKING
+     * Anti-jitter features:
+     * 1. Deadband tolerance (1.0°) - ignores small errors
+     * 2. Exponential smoothing - gradual position changes
+     * 3. Rate limiting - prevents sudden jumps
      */
+    private void updateTurretAiming() {
+        if (!tagFound) {
+            return;
+        }
+
+        // If not continuous tracking and already aligned, stop
+        if (!continuousTracking && hasAligned) {
+            return;
+        }
+
+        // Calculate error angle (apply compensation offset if needed)
+        double adjustedError = errorAngleDeg - targetAngle;
+
+        // DEADBAND: Ignore small errors to prevent jitter
+        if (Math.abs(adjustedError) < PARAMS.aimTolerance) {
+            hasAligned = true;
+            return;
+        } else {
+            hasAligned = false; // Keep tracking if error exceeds tolerance
+        }
+
+        // Calculate desired position change
+        // Negative because servo direction is opposite to error
+        double desiredPosChange = -adjustedError * PARAMS.posPerDegree;
+        double desiredPos = turretAimPos + desiredPosChange;
+
+        // Clamp to valid servo range
+        desiredPos = clamper(desiredPos, 0.0, 1.0);
+
+        // EXPONENTIAL SMOOTHING: Gradually approach target position
+        // Lower smoothingFactor = faster response, higher = smoother but slower
+        targetTurretPos = turretAimPos + (desiredPos - turretAimPos) * (1.0 - PARAMS.servoSmoothingFactor);
+
+        // RATE LIMITING: Prevent sudden large jumps
+        double positionChange = targetTurretPos - lastTurretPos;
+        if (Math.abs(positionChange) > PARAMS.maxServoChange) {
+            positionChange = Math.signum(positionChange) * PARAMS.maxServoChange;
+        }
+
+        turretAimPos = lastTurretPos + positionChange;
+        turretAimPos = clamper(turretAimPos, 0.0, 1.0);
+
+        // Apply to servo
+        turretAim.setPosition(turretAimPos);
+
+        // Update last position for next iteration
+        lastTurretPos = turretAimPos;
+    }
+
+    // OLD: Robot heading control (COMMENTED OUT - KEPT FOR REFERENCE)
+    /*
     private void updateHeadingControl() {
         if (!tagFound) {
             headingCorrection = 0.0;
             return;
         }
 
-        // If already aligned once, stop tracking
         if (hasAligned) {
             headingCorrection = 0.0;
             return;
         }
 
-        // Check if within tolerance
         if (Math.abs(errorAngleDeg) <= Params.TOLERANCE_DEG) {
             headingCorrection = 0.0;
-            hasAligned = true;  // Mark as aligned - stop tracking
+            hasAligned = true;
             return;
         }
 
-        // SIMPLIFIED APPROACH: Direct proportional control
-        // errorAngleDeg is the angle we need to rotate
-        // Positive errorAngleDeg = target is RIGHT, need to rotate RIGHT (positive)
-        // Negative errorAngleDeg = target is LEFT, need to rotate LEFT (negative)
-
         double proportionalPower = PARAMS.KP_HEADING * errorAngleDeg;
 
-        // Clamp the power to safe limits
         if (proportionalPower > 0) {
             headingCorrection = clamper(proportionalPower, Params.MIN_HEADING_POWER, Params.MAX_HEADING_POWER);
         } else {
             headingCorrection = clamper(proportionalPower, -Params.MAX_HEADING_POWER, -Params.MIN_HEADING_POWER);
         }
     }
+    */
 
-    /**
-     * Measure distance to AprilTag using limelight angle
-     */
     private void measureDistance() {
         if (tagFound) {
             disToAprilTag = (ATHeight - LimelightHeight) / Math.tan((ATAngle + LimelightAngle) * (Math.PI / 180));
         }
     }
 
-    /**
-     * Calculate target RPM based on distance to AprilTag
-     * Uses polynomial formula from old robot (Jan 4 formula)
-     */
     private void calcTargetRPM() {
         double x = disToAprilTag;
 
         if (tagFound) {
-            // Cubic polynomial formula: 0.00284*x³ - 0.343*x² + 23.8*x + 2022
             targetRPM = 0.00284 * x * x * x - 0.343 * x * x + 23.8 * x + 2022;
-
-            // Clamp RPM to safe operating range
             targetRPM = clamper(targetRPM, 2300, 3180);
         }
     }
 
-    /**
-     * Calculate turret angle based on distance to AprilTag
-     * Uses polynomial formula from old robot (Jan 4 formula)
-     */
     private void calcTurretAngle() {
         double x = disToAprilTag;
 
         if (tagFound) {
             double shooterAngleSetting;
 
-            // Calculate angle based on distance
             if (x < 75) {
-                // Cubic polynomial: -0.0000046*x³ + 0.00108*x² - 0.0885*x + 2.54
                 shooterAngleSetting = -0.0000046 * x * x * x + 0.00108 * x * x - 0.0885 * x + 2.54;
             } else {
-                // Beyond 75 inches, use minimum angle
                 shooterAngleSetting = 0.0;
             }
 
-            // Clamp to valid servo range
             turretAnglePos = clamper(shooterAngleSetting, 0.0, 1.0);
         }
     }
 
-    /**
-     * Update turret angle servo position (manual or auto)
-     */
     private void updateTurretAngle() {
-        // If not in auto mode, apply manual commands
         if (!autoAngleEnabled) {
             if (turretAngleCommand > 0) {
                 turretAnglePos += TURRET_ANGLE_STEP;
@@ -598,15 +569,11 @@ public final class Turret {
             turretAnglePos = clamper(turretAnglePos, 0.0, 1.0);
         }
 
-        // Apply position to servo
         turretAngle.setPosition(turretAnglePos);
     }
 
     // ==================== HELPER METHODS ====================
 
-    /**
-     * Clamp a value between min and max
-     */
     private static double clamper(double v, double lo, double hi) {
         return Math.max(lo, Math.min(hi, v));
     }

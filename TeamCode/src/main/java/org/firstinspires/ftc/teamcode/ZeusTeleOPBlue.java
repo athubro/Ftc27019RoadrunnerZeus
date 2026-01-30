@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 public class ZeusTeleOPBlue extends LinearOpMode {
 
     private Turret turret;
-    private Intake intake;
+    private Intake intake; //
     private Pose2d initialPose = new Pose2d(0, 0, 0);
 
     private double speedRatio = 0.75;

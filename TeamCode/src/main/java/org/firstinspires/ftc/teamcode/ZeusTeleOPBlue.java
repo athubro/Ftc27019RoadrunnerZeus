@@ -121,12 +121,17 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             // =========================
 
             // Intake motor control with left trigger (intake) and left stick Y (outtake)
-            if (gamepad2.left_trigger > 0.1) {
-                intake.setIntakePower(gamepad2.left_trigger);  // Intake
-            } else if (Math.abs(gamepad2.left_stick_y) > 0.1) {
-                intake.setIntakePower(gamepad2.left_stick_y);  // Manual control
+            if (gamepad1.right_trigger > 0.1) {
+                intake.setIntakePower(gamepad1.right_trigger);  // Intake
+                intake.closeGate();
+            } else if (Math.abs(gamepad1.left_trigger) > 0.1) {
+                intake.setIntakePower(-gamepad1.left_trigger);  // Manual control
             } else {
                 intake.setIntakePower(0);  // Stop
+            }
+            if (gamepad2.left_trigger > 0.1) {
+                intake.setIntakePower(gamepad1.left_trigger);  // Intake
+                intake.openGate();
             }
 
             // Gate control

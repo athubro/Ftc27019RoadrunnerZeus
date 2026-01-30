@@ -14,7 +14,7 @@ public final class Intake {
 
     // ==================== HARDWARE ====================
     public final DcMotorEx intakeMotor;
-    public final Servo gate;
+    public Servo gate, middleCompartment, topCompartment;
     public final Telemetry telemetry;
 
     // ==================== CONSTANTS ====================
@@ -32,6 +32,11 @@ public final class Intake {
         // Initialize hardware
         intakeMotor = hardwareMap.get(DcMotorEx.class, "intake");
         gate = hardwareMap.get(Servo.class, "gate");
+        middleCompartment = hardwareMap.get(Servo.class, "middleCompartment");
+
+        topCompartment = hardwareMap.get(Servo.class, "backCompartment");
+        middleCompartment.setDirection(Servo.Direction.REVERSE);
+
 
         // Set motor to coast when power is 0
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
@@ -89,6 +94,27 @@ public final class Intake {
             openGate();
         }
     }
+
+    //0 position is normal pass through positions
+    //1 is stored position
+    public void storeMiddle(){
+        middleCompartment.setPosition(1);
+    }
+    public void storeTop(){
+        topCompartment.setPosition(1);
+    }
+    public void resetMiddle(){
+        middleCompartment.setPosition(0);
+    }
+    public void resetTop(){
+        topCompartment.setPosition(0);
+    }
+    public void resetAll(){
+        middleCompartment.setPosition(0);
+        topCompartment.setPosition(0);
+    }
+
+
 
     /**
      * Get current intake power

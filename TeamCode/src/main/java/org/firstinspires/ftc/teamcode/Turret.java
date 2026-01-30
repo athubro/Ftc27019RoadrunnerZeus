@@ -87,7 +87,7 @@ public final class Turret {
     // ==================== DISTANCE MEASUREMENT ====================
     public final double ATHeight = 29.5; // AprilTag height in inches
     public final double LimelightHeight = 13.5; // Limelight height in inches
-    public final double LimelightAngle = 20; // degrees from horizontal
+    public final double LimelightAngle = 23.2; // degrees from horizontal
     public double disToAprilTag = 0;
     public double ATAngle = 0;
     public boolean tagFound = false;

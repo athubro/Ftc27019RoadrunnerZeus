@@ -39,10 +39,10 @@ public final class Turret {
         public static final double TOLERANCE_DEG = 1.0;
 
         // Turret motor control (velocity mode) - low gain to reduce jitter
-        public static final double KP_TURRET_VEL     = 0.05;     // tune between 0.03–0.08
+        public static final double KP_TURRET_VEL     = 0.05;
         public static final double MIN_TURRET_POWER  = 0.05;
         public static final double MAX_TURRET_POWER  = 0.65;
-        public static final double DEADZONE_DEG      = 1.2;      // larger deadzone helps anti-jitter
+        public static final double DEADZONE_DEG      = 1.2;
 
         // Turret Gear Calculations
         public static final double SMALL_GEAR_TEETH = 39.0;
@@ -50,7 +50,11 @@ public final class Turret {
         public static final double TICKS_PER_SMALL_REV = 285.0;
         public static final double GEAR_RATIO = BIG_GEAR_TEETH / SMALL_GEAR_TEETH;
         public static final double BIG_GEAR_DEG_PER_SMALL_REV = 360.0 / GEAR_RATIO;
-        public static final double TICKS_PER_BIG_GEAR_DEGREE = TICKS_PER_SMALL_REV / BIG_GEAR_DEG_PER_SMALL_REV; // ≈3.247
+        public static final double TICKS_PER_BIG_GEAR_DEGREE = TICKS_PER_SMALL_REV / BIG_GEAR_DEG_PER_SMALL_REV;
+
+        // NEW: Soft rotation limits for turret (degrees from center)
+        public static final double TURRET_MIN_DEG = -90.0;
+        public static final double TURRET_MAX_DEG = +90.0;
 
         // Legacy servo params (kept but unused now)
         public double posPerDegree = 1.0 / 180.0;
@@ -63,8 +67,8 @@ public final class Turret {
     // ==================== HARDWARE ====================
     public final DcMotorEx leftFlywheel;
     public final DcMotorEx rightFlywheel;
-    public final Servo turretAngle;          // up/down angle servo
-    public final DcMotorEx turretMotor;      // yaw aiming motor (replaces turretAim servo)
+    public final Servo turretAngle;
+    public final DcMotorEx turretMotor;
 
     public final Limelight3A limelight;
     public final FtcDashboard dashboard;
@@ -74,7 +78,7 @@ public final class Turret {
     // ==================== DISTANCE MEASUREMENT ====================
     public final double ATHeight = 29.5;
     public final double LimelightHeight = 13.5;
-    public final double LimelightAngle = 20;
+    public final double LimelightAngle = 23.2;
     public double disToAprilTag = 0;
     public double ATAngle = 0;
     public boolean tagFound = false;
@@ -84,7 +88,6 @@ public final class Turret {
     public final ElapsedTime pidTimer = new ElapsedTime();
 
     // ==================== STATE VARIABLES ====================
-    // Flywheel state
     public double currentRPMLeft = 0.0;
     public double currentRPMRight = 0.0;
     public double targetRPM = 3000.0;
@@ -92,46 +95,39 @@ public final class Turret {
 
     private double speedCheckTimer = 0.0;
 
-    // Turret angle state (up/down – servo)
     public double turretAnglePos = 0.5;
     public int turretAngleCommand = 0;
     private static final double TURRET_ANGLE_STEP = 0.009;
     public boolean autoAngleEnabled = false;
 
-    // Turret aiming state (yaw – motor)
-    public double targetAngle = 0;           // compensation offset
+    public double targetAngle = 0;
     public boolean adjustAiming = false;
     private boolean hasAligned = false;
 
-    // Control flags
     public boolean shootingEnabled = false;
     public boolean autoRPMEnabled = false;
     public boolean trackingMode = false;
     public boolean continuousTracking = true;
 
-    // Tracking state
     public double errorAngleDeg = 0.0;
 
-    // Odometry tracking mode
     private boolean useOdometryTracking = false;
-    private final Vector2d targetPos = new Vector2d(-60, -60); // fixed field target (inches)
+    private final Vector2d targetPos = new Vector2d(-60, -60);
 
     // ==================== CONSTRUCTOR ====================
     public Turret(HardwareMap hardwareMap, Telemetry telemetry, Pose2d initialPose) {
         this.telemetry = telemetry;
 
-        // Start at (0,0,0) if no initial pose passed or override
         this.drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
 
         leftFlywheel  = hardwareMap.get(DcMotorEx.class, "leftFlywheel");
         rightFlywheel = hardwareMap.get(DcMotorEx.class, "rightFlywheel");
         turretAngle   = hardwareMap.get(Servo.class,     "shooterAngle");
-        turretMotor   = hardwareMap.get(DcMotorEx.class, "turretMotor"); // your motor name
+        turretMotor   = hardwareMap.get(DcMotorEx.class, "turretMotor");
 
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         dashboard = FtcDashboard.getInstance();
 
-        // Flywheel config
         rightFlywheel.setDirection(DcMotor.Direction.REVERSE);
         leftFlywheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightFlywheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -144,11 +140,10 @@ public final class Turret {
         leftFlywheel.setVelocityPIDFCoefficients(PARAMS.kP, PARAMS.kI, PARAMS.kD, PARAMS.kF * 0.98);
         rightFlywheel.setVelocityPIDFCoefficients(PARAMS.kP * 1.05, PARAMS.kI, PARAMS.kD, PARAMS.kF);
 
-        // Turret motor config
         turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         turretMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        // turretMotor.setDirection(DcMotor.Direction.REVERSE); // flip if direction is wrong
+        // turretMotor.setDirection(DcMotor.Direction.REVERSE); // flip if needed
 
         turretAngle.setPosition(turretAnglePos);
 
@@ -191,8 +186,7 @@ public final class Turret {
     public boolean isAligned() { return hasAligned; }
     public double getTurretAnglePosition() { return turretAnglePos; }
 
-    // Legacy servo methods (kept but unused)
-    public double getTurretAimPosition() { return 0.5; } // placeholder
+    public double getTurretAimPosition() { return 0.5; }
     public void setTurretAimPosition(double pos) { /* no-op */ }
 
     public MecanumDrive getDrive() { return drive; }
@@ -206,7 +200,6 @@ public final class Turret {
 
     public void setPose(Pose2d pose) { drive.localizer.setPose(pose); }
 
-    // NEW: Switch between vision and odometry aiming
     public void setUseOdometryTracking(boolean enabled) {
         this.useOdometryTracking = enabled;
     }
@@ -306,6 +299,7 @@ public final class Turret {
         packet.put("Tracking Error (deg)", errorAngleDeg);
         packet.put("Turret Power", turretMotor.getPower());
         packet.put("Turret Ticks", turretMotor.getCurrentPosition());
+        packet.put("Turret Deg", turretMotor.getCurrentPosition() / PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
         packet.put("Odom Tracking Active", useOdometryTracking);
         packet.put("Has Aligned", hasAligned);
 
@@ -320,6 +314,7 @@ public final class Turret {
         telemetry.addData("Tracking Error", "%.1f°", errorAngleDeg);
         telemetry.addData("Turret Power", "%.3f", turretMotor.getPower());
         telemetry.addData("Turret Ticks", turretMotor.getCurrentPosition());
+        telemetry.addData("Turret Deg", "%.1f°", turretMotor.getCurrentPosition() / PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
         telemetry.addData("Odom Mode", useOdometryTracking);
         telemetry.addData("Has Aligned", hasAligned);
     }
@@ -361,7 +356,7 @@ public final class Turret {
 
         errorAngleDeg = relativeAngleDeg - currentTurretDeg;
 
-        tagFound = true; // enable aiming logic
+        tagFound = true;
         ATAngle = 0.0;
     }
 
@@ -386,8 +381,33 @@ public final class Turret {
 
         hasAligned = false;
 
-        double power = -errorDeg * PARAMS.KP_TURRET_VEL; // flip sign if direction is reversed
+        double power = -errorDeg * PARAMS.KP_TURRET_VEL;
 
+        // NEW: Soft limit enforcement
+        double currentDeg = turretMotor.getCurrentPosition() / PARAMS.TICKS_PER_BIG_GEAR_DEGREE;
+
+        // Hard block: don't allow movement past limits
+        if (currentDeg >= PARAMS.TURRET_MAX_DEG && power > 0) {
+            power = 0;
+        }
+        if (currentDeg <= PARAMS.TURRET_MIN_DEG && power < 0) {
+            power = 0;
+        }
+
+        // Optional: gentle slowdown near limits (uncomment if you want smoother approach)
+        /*
+        double distToMax = PARAMS.TURRET_MAX_DEG - currentDeg;
+        double distToMin = currentDeg - PARAMS.TURRET_MIN_DEG;
+
+        if (distToMax < 20 && power > 0) {
+            power *= Math.max(0.1, distToMax / 20.0);
+        }
+        if (distToMin < 20 && power < 0) {
+            power *= Math.max(0.1, distToMin / 20.0);
+        }
+        */
+
+        // Existing power clamping
         power = Math.max(-PARAMS.MAX_TURRET_POWER, Math.min(PARAMS.MAX_TURRET_POWER, power));
 
         if (Math.abs(power) > 0.001 && Math.abs(power) < PARAMS.MIN_TURRET_POWER) {

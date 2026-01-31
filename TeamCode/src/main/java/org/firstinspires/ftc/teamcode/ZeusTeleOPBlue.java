@@ -70,7 +70,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             // =========================
 
             // Toggle ALL tracking features with A button
-            if (gamepad2.a) {
+            if (gamepad2.b) {
                 boolean newState = !turret.trackingMode;
                 turret.setTrackingMode(newState);
                 turret.setAutoAngleEnabled(newState);
@@ -78,11 +78,12 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             }
 
             // NEW: Toggle between Limelight vision and Odometry tracking
-            if (gamepad2.right_stick_button) {
+            if (gamepad2.a) {
                 usingOdomTracking = !usingOdomTracking;
                 turret.setUseOdometryTracking(usingOdomTracking);
-                // Small delay to prevent rapid toggling (debounce)
+                // Small delay to prevent rapid toggling (debounce
                 sleep(200);
+
             }
 
             // Enable/disable shooting with right trigger
@@ -136,9 +137,12 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             }
 
             // Toggle gate (B button)
+            /**
             if (gamepad2.b) {
                 intake.toggleGate();
             }
+             **/
+
 
             // =========================
             // UPDATE ALL SYSTEMS

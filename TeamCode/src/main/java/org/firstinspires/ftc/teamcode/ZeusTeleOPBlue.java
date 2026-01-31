@@ -158,6 +158,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             // =========================
             // TELEMETRY
             // =========================
+            telemetry.addData("storage", intake.storage);
 
             telemetry.addLine("=== DRIVE ===");
             telemetry.addData("Speed Mode", speedRatio == 1.0 ? "FAST" : (speedRatio == 0.3 ? "SLOW" : "NORMAL"));

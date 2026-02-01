@@ -114,18 +114,18 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             // GAMEPAD 2: INTAKE CONTROLS
             // =========================
 
-            if (gamepad2.x) {
-                intake.openGate();
-                intake.setIntakePower(1.0);
-            } else if (gamepad2.y) {
+            // Intake motor control with left trigger (intake) and left stick Y (outtake)
+            if (gamepad1.right_trigger > 0.1) {
+                intake.setIntakePower(gamepad1.right_trigger);  // Intake
                 intake.closeGate();
-                intake.setIntakePower(1.0);
-            } else if (gamepad2.left_trigger > 0.1) {
-                intake.setIntakePower(gamepad2.left_trigger);
-            } else if (Math.abs(gamepad2.left_stick_y) > 0.1) {
-                intake.setIntakePower(gamepad2.left_stick_y);
+            } else if (Math.abs(gamepad1.left_trigger) > 0.1) {
+                intake.setIntakePower(-gamepad1.left_trigger);  // Manual control
             } else {
                 intake.setIntakePower(0);
+            }
+            if (gamepad2.left_trigger > 0.1) {
+                intake.setIntakePower(gamepad1.left_trigger);  // Intake
+                intake.openGate();
             }
 
             // Gate control (independent)
@@ -153,6 +153,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             // =========================
             // TELEMETRY
             // =========================
+            telemetry.addData("storage", intake.storage);
 
             telemetry.addLine("=== DRIVE ===");
             telemetry.addData("Speed Mode", speedRatio == 1.0 ? "FAST" : (speedRatio == 0.3 ? "SLOW" : "NORMAL"));

@@ -14,6 +14,8 @@ public class ZeusTeleOPBlue extends LinearOpMode {
     private Pose2d initialPose = new Pose2d(0, 0, 0);
 
     private double speedRatio = 0.75;
+    public String[] motiff = {"P", "P" ,"G"};
+
 
     @Override
     public void runOpMode() {
@@ -48,7 +50,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
 
 
         while (opModeIsActive()) {
-
+            intake.storageUpdate();
             // =========================
             // GAMEPAD 1: DRIVE CONTROLS
             // =========================
@@ -65,6 +67,37 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             } else {
                 speedRatio = 0.75; // Normal speed
             }
+            //========================= sorting temportay
+            if (gamepad1.aWasPressed()) {
+                intake.storeBalls(motiff);
+            }
+            if (gamepad1.bWasPressed()) {
+                intake.executeNextStep();
+            }
+            if (gamepad1.yWasPressed()) {
+                intake.resetAll();
+            }
+
+            if (gamepad1.dpadUpWasPressed()) {
+                motiff[0] = "P";
+                motiff[1] = "P";
+                motiff[2] = "G";
+
+            }
+            if (gamepad1.dpadDownWasPressed()) {
+
+                motiff[0] = "G";
+                motiff[1] = "P";
+                motiff[2] = "P";
+
+            }if (gamepad1.dpadLeftWasPressed()) {
+
+                motiff[0] = "P";
+                motiff[1] = "G";
+                motiff[2] = "P";
+
+            }
+
 
             // =========================
             // GAMEPAD 2: TURRET CONTROLS
@@ -130,7 +163,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
                 intake.setIntakePower(0);  // Stop
             }
             if (gamepad2.left_trigger > 0.1) {
-                intake.setIntakePower(gamepad1.left_trigger);  // Intake
+                intake.setIntakePower(gamepad2.left_trigger);  // Intake
                 intake.openGate();
             }
 
@@ -158,7 +191,18 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             // =========================
             // TELEMETRY
             // =========================
-            telemetry.addData("storage", intake.storage);
+           // telemetry.addData("storage", intake.storage);
+            telemetry.addData("back(top)", intake.storage[0]);
+            telemetry.addData("middle ", intake.storage[1]);
+            telemetry.addData("front (bottom)", intake.storage[2]);
+            telemetry.addData("motiff0", motiff[0]);
+            telemetry.addData("motiff1", motiff[1]);
+            telemetry.addData("motiff2", motiff[2]);
+
+            telemetry.addData("firststep", intake.firstStep);
+            telemetry.addData("secondstep", intake.secondStep);
+            telemetry.addData("ballCount", intake.ballCount);
+            telemetry.addData("ball stored?", intake.ballsStored);
 
             telemetry.addLine("=== DRIVE ===");
             telemetry.addData("Speed Mode", speedRatio == 1.0 ? "FAST" : (speedRatio == 0.3 ? "SLOW" : "NORMAL"));

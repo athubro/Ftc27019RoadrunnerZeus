@@ -17,6 +17,8 @@ import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import org.firstinspires.ftc.robotcore.external.JavaUtil;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
+import java.util.Arrays;
+
 /**
  * Intake subsystem - controls intake motor and gate servo
  */
@@ -28,26 +30,45 @@ public final class Intake {
 
     public String[] storage = {"N", "N", "N"};
 
+    public boolean finishedStoring = true;
+
+    public double ballCount = 0;
+
     boolean ballsStored = false;
+
+    //B is both storage reset, T is top one reset, M is middle reset, and N is no step
+    String firstStep = "N";
+    String secondStep = "N";
+
+
 //---------------front sensor -----------------
     double frontColorHuePurpleBall = 227;
     double frontColorHueGreenBall = 158;
-    double frontColorHueUpperBound = 6;
-    double frontColorHueLowerBound = -6;
+    double frontColorHueUpperBound = 20;
+    double frontColorHueLowerBound = -20;
     double frontColorDis = 3.2;
     //-----------middle sensor ------------
-    double middleColorHuePurpleBall = 181;
+    double middleColorHuePurpleBall = 176;
     double middleColorHueGreenBall = 152;
 
     double middleColorHueUpperBound = 15;
     double middleColorHueLowerBound = -15;
     double middleColorDis = 12;
     //------------- back sensor -------------
-    double backColorHuePurpleBall = 195;
+    double backColorHuePurpleBall = 200;
     double backColorHueGreenBall = 160;
     double backColorHueUpperBound = 10;
     double backColorHueLowerBound = -10;
     double backColorDis = 5.5;
+
+
+
+    public double frontHue;
+    public double frontDis;
+    public double middleHue;
+    public double middleDis;
+    public double backHue;
+    public double backDis;
 
     // ==================== HARDWARE ====================
     public final DcMotorEx intakeMotor;
@@ -107,6 +128,11 @@ public final class Intake {
         // Initialize gate to closed position
         gate.setPosition(GATE_CLOSED);
 
+
+        ((NormalizedColorSensor) middleColor_REV_ColorRangeSensor).setGain(80);
+        ((NormalizedColorSensor) frontColor_REV_ColorRangeSensor).setGain(70);
+        ((NormalizedColorSensor) backColor_REV_ColorRangeSensor).setGain(80);
+
         resetAll();
     }
 
@@ -116,21 +142,39 @@ public final class Intake {
     //======================MAIN UPDATE ====================
 
     public void storageUpdate () {
+
         normalizedBackColor = ((NormalizedColorSensor) backColor).getNormalizedColors();
         normalizedMiddleColor = ((NormalizedColorSensor) middleColor).getNormalizedColors();
         normalizedFrontColor = ((NormalizedColorSensor) frontColor).getNormalizedColors();
         myFrontColor = normalizedFrontColor.toColor();
         myMiddleColor = normalizedMiddleColor.toColor();
         myBackColor = normalizedBackColor.toColor();
+
+        frontHue = JavaUtil.colorToHue(myFrontColor);
+        frontDis = ((DistanceSensor) frontColor_REV_ColorRangeSensor).getDistance(DistanceUnit.CM);
+        middleHue = JavaUtil.colorToHue(myMiddleColor);
+        middleDis = ((DistanceSensor) middleColor_REV_ColorRangeSensor).getDistance(DistanceUnit.CM);;
+        backHue = JavaUtil.colorToHue(myBackColor);
+        backDis = ((DistanceSensor) backColor_REV_ColorRangeSensor).getDistance(DistanceUnit.CM);;
         // bottom (front of robot) is 0
-        storage[0] = detectColor(((DistanceSensor) frontColor_REV_ColorRangeSensor).getDistance(DistanceUnit.CM), JavaUtil.colorToHue(myFrontColor), "front");
-        storage[1] = detectColor(((DistanceSensor) middleColor_REV_ColorRangeSensor).getDistance(DistanceUnit.CM), JavaUtil.colorToHue(myMiddleColor), "middle");
-        storage[2] = detectColor(((DistanceSensor) backColor_REV_ColorRangeSensor).getDistance(DistanceUnit.CM), JavaUtil.colorToHue(myBackColor), "back");
+        storage[2] = detectColor(frontDis, frontHue , "front");
+        storage[1] = detectColor(middleDis,middleHue, "middle");
+        storage[0] = detectColor(backDis, backHue, "back");
+        countBalls();
 
         //telemetry.addData("storage",storage);
        // telemetry.update();
     }
 
+
+    public void countBalls() {
+        ballCount=0;
+        for (int i = 0; i < 3; i++) {
+            if (!storage[i].equals("N")) {
+                ballCount++;
+            }
+        }
+    }
     /**
      * Set intake motor power
       power Motor power from -1.0 to 1.0 (typically gamepad trigger value)
@@ -211,21 +255,21 @@ public final class Intake {
             hueCheckGreenBall = backColorHueGreenBall;
 
             hueUpperBound = backColorHueUpperBound;
-            hueUpperBound = backColorHueLowerBound;
+            hueLowerBound = backColorHueLowerBound;
 
         } else if (slot.equals("middle")) {
             disCheck = middleColorDis;
             hueCheckPurpleBall = middleColorHuePurpleBall;
             hueCheckGreenBall = middleColorHueGreenBall;
             hueUpperBound = middleColorHueUpperBound;
-            hueUpperBound = middleColorHueLowerBound;
+            hueLowerBound = middleColorHueLowerBound;
 
         } else if (slot.equals("front")) {
             disCheck = frontColorDis;
             hueCheckPurpleBall = frontColorHuePurpleBall;
             hueCheckGreenBall = frontColorHueGreenBall;
             hueUpperBound = frontColorHueUpperBound;
-            hueUpperBound = frontColorHueLowerBound;
+            hueLowerBound = frontColorHueLowerBound;
 
         }
 
@@ -239,9 +283,114 @@ public final class Intake {
             return "N";
         }
     }
-    public void storeBalls (String[] target, String[] currentArray) {
+    public void storeBalls (String[] target) {
+        String[] output = {"N", "N", "N"};
+        //to shoot (first ball to shoot);
+        String firstBall = "N";
         if (!ballsStored) {
+            if ((storage[0].equals(storage[1]) && storage[0].equals(storage[2]))) {
+                firstStep = "N";
+                secondStep = "N";
+                ballsStored = false;
+                finishedStoring = true;
+            } else {
+                //======check if store first ball works
+                output[0] = storage[1];
+                output[1] = storage[2];
+                output[2] = storage[0];
+                if (Arrays.equals(output, target)) {
+                    storeTop();
+                    firstStep = "T";
+                    ballsStored = true;
+                    finishedStoring = true;
 
+                } else { //----------storing first ball doesnt work, checking if storing only second ball works
+                    output[0] = storage[0];
+                    output[1] = storage[2];
+                    output[2] = storage[1];
+                    if (Arrays.equals(output, target)) {
+                        storeMiddle();
+                        firstStep = "M";
+                        secondStep = "N";
+                        ballsStored = true;
+                        finishedStoring = true;
+                    } else { //========finally, checks if moving both balls to the back works
+
+
+                        output[0] = storage[2];
+                        output[1] = storage[0];
+                        output[2] = storage[1];
+                        if (Arrays.equals(output, target)) {
+                            storeTop();
+                            storeMiddle();
+                            firstStep = "B";
+                            secondStep = "N";
+                            ballsStored = true;
+                            finishedStoring = true;
+
+
+                        } else { // checks if you can store first 2 balls, then put second back in before first
+//========finally, checks if moving both balls to the back works
+                            output[0] = storage[2];
+                            output[1] = storage[1];
+                            output[2] = storage[0];
+                            if (Arrays.equals(output, target)) {
+                                storeTop();
+                                storeMiddle();
+                                firstStep = "M";
+                                secondStep = "T";
+                                ballsStored = true;
+                                finishedStoring = true;
+                            } else { //======================IF NOTHING WORKSSSSS====
+                                firstStep = "N";
+                                secondStep = "N";
+                                ballsStored = false;
+                                finishedStoring = true;
+                            }
+
+                        }
+                    }
+                }
+
+            }
+
+
+
+
+
+        }
+    }
+
+
+    public void executeNextStep() {
+        if (!firstStep.equals("N")) {
+            if (firstStep.equals("T")) {
+                resetTop();
+
+            } else if (firstStep.equals("M")) {
+                resetMiddle();
+
+            } else if (firstStep.equals("B")) {
+                resetAll();
+
+            }
+            firstStep = "N";
+        } else {
+            if (!secondStep.equals("N")) {
+                if (secondStep.equals("T")) {
+                    resetTop();
+
+                } else if (secondStep.equals("M")) {
+                    resetMiddle();
+
+                } else if (secondStep.equals("B")) {
+                    resetAll();
+
+                }
+                secondStep = "N";
+                ballsStored = false;
+            }
+            ballsStored = false;
         }
     }
 

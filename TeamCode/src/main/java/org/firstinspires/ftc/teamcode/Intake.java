@@ -32,6 +32,7 @@ public final class Intake {
         // Initialize hardware
         intakeMotor = hardwareMap.get(DcMotorEx.class, "intake");
         gate = hardwareMap.get(Servo.class, "gate");
+        
 
         // Set motor to coast when power is 0
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);

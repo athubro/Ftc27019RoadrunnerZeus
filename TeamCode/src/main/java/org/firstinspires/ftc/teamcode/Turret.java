@@ -24,39 +24,42 @@ public final class Turret {
     public class Params {
         public static final double PID_INTERVAL = 0.1;
 
-        // PID Coefficients (flywheels)
+        // Flywheel PID
         public double kP = 50.0;
         public double kI = 0.0;
         public double kD = 0.0;
         public double kF = 10.0;
 
-        // Motor Parameters
+        // Flywheel motor
         public static final double TICKS_PER_REV = 28.0;
         public double toleranceRPM = 70.0;
 
-        // Vision Parameters
+        // Vision
         public int TARGET_TAG_ID = 20;
         public static final double TOLERANCE_DEG = 1.0;
 
-        // Turret motor control (velocity mode) - low gain to reduce jitter
-        public static final double KP_TURRET_VEL     = 0.05;
-        public static final double MIN_TURRET_POWER  = 0.05;
-        public static final double MAX_TURRET_POWER  = 0.65;
-        public static final double DEADZONE_DEG      = 1.2;
+        // Turret PID coefficients – tuned for faster tracking + stability
+        public static final double TURRET_KP = 0.22;        // Proportional – main speed driver
+        public static final double TURRET_KI = 0.04;        // Integral – kills steady-state error
+        public static final double TURRET_KD = 0.50;        // Derivative – prevents overshoot
+        public static final double TURRET_MAX_INTEGRAL = 2.0; // Anti-windup clamp
 
-        // Turret Gear Calculations
+        public static final double MAX_TURRET_POWER = 0.90; // Allow almost full power when far
+        public static final double DEADZONE_DEG = 1.0;      // Ignore very small errors
+
+        // Gear ratio / ticks per degree
         public static final double SMALL_GEAR_TEETH = 39.0;
-        public static final double BIG_GEAR_TEETH   = 160.0;
+        public static final double BIG_GEAR_TEETH = 160.0;
         public static final double TICKS_PER_SMALL_REV = 285.0;
         public static final double GEAR_RATIO = BIG_GEAR_TEETH / SMALL_GEAR_TEETH;
         public static final double BIG_GEAR_DEG_PER_SMALL_REV = 360.0 / GEAR_RATIO;
         public static final double TICKS_PER_BIG_GEAR_DEGREE = TICKS_PER_SMALL_REV / BIG_GEAR_DEG_PER_SMALL_REV;
 
-        // NEW: Soft rotation limits for turret (degrees from center)
+        // Soft limits (degrees from center)
         public static final double TURRET_MIN_DEG = -90.0;
         public static final double TURRET_MAX_DEG = +90.0;
 
-        // Legacy servo params (kept but unused now)
+        // Legacy (unused now)
         public double posPerDegree = 1.0 / 180.0;
         public double maxServoChange = 0.05;
         public double servoSmoothingFactor = 0.3;
@@ -88,31 +91,41 @@ public final class Turret {
     public final ElapsedTime pidTimer = new ElapsedTime();
 
     // ==================== STATE VARIABLES ====================
+    // Flywheels
     public double currentRPMLeft = 0.0;
     public double currentRPMRight = 0.0;
     public double targetRPM = 3000.0;
     public boolean flywheelUpToSpeed = false;
-
     private double speedCheckTimer = 0.0;
 
+    // Turret angle (pitch servo)
     public double turretAnglePos = 0.5;
     public int turretAngleCommand = 0;
     private static final double TURRET_ANGLE_STEP = 0.009;
     public boolean autoAngleEnabled = false;
 
+    // Turret yaw (motor)
     public double targetAngle = 0;
     public boolean adjustAiming = false;
     private boolean hasAligned = false;
 
+    // General flags
     public boolean shootingEnabled = false;
     public boolean autoRPMEnabled = false;
     public boolean trackingMode = false;
     public boolean continuousTracking = true;
 
+    // Shared tracking state
     public double errorAngleDeg = 0.0;
 
+    // Mode selection
     private boolean useOdometryTracking = false;
     private final Vector2d targetPos = new Vector2d(-60, -60);
+
+    // Turret PID state
+    private double turretIntegral = 0.0;
+    private double turretLastError = 0.0;
+    private double turretLastTime = 0.0;
 
     // ==================== CONSTRUCTOR ====================
     public Turret(HardwareMap hardwareMap, Telemetry telemetry, Pose2d initialPose) {
@@ -120,15 +133,16 @@ public final class Turret {
 
         this.drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
 
-        leftFlywheel  = hardwareMap.get(DcMotorEx.class, "leftFlywheel");
+        leftFlywheel = hardwareMap.get(DcMotorEx.class, "leftFlywheel");
         rightFlywheel = hardwareMap.get(DcMotorEx.class, "rightFlywheel");
-        turretAngle   = hardwareMap.get(Servo.class,     "shooterAngle");
-        turretMotor   = hardwareMap.get(DcMotorEx.class, "turretMotor");
+        turretAngle = hardwareMap.get(Servo.class, "shooterAngle");
+        turretMotor = hardwareMap.get(DcMotorEx.class, "turretMotor");
 
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         dashboard = FtcDashboard.getInstance();
 
         rightFlywheel.setDirection(DcMotor.Direction.REVERSE);
+
         leftFlywheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightFlywheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -143,7 +157,6 @@ public final class Turret {
         turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         turretMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        // turretMotor.setDirection(DcMotor.Direction.REVERSE); // flip if needed
 
         turretAngle.setPosition(turretAnglePos);
 
@@ -151,6 +164,7 @@ public final class Turret {
         limelight.start();
 
         pidTimer.reset();
+        turretLastTime = timer.seconds();
     }
 
     // ==================== PUBLIC API ====================
@@ -169,9 +183,12 @@ public final class Turret {
         if (enabled) {
             hasAligned = false;
             adjustAiming = true;
+            turretIntegral = 0.0;      // Reset PID when tracking starts
+            turretLastError = 0.0;
         } else {
             adjustAiming = false;
             hasAligned = false;
+            turretMotor.setPower(0);
         }
     }
 
@@ -206,15 +223,10 @@ public final class Turret {
 
     // ==================== MAIN UPDATE ====================
     public void update() {
-        if (useOdometryTracking) {
-            updateOdomTracking();
-        } else {
-            updateVisionTracking();
-        }
+        if (useOdometryTracking) updateOdomTracking();
+        else updateVisionTracking();
 
-        if (trackingMode) {
-            updateTurretAiming();
-        }
+        if (trackingMode) updateTurretAiming();
 
         if (tagFound && !useOdometryTracking) {
             if (autoRPMEnabled) calcTargetRPM();
@@ -228,15 +240,10 @@ public final class Turret {
     }
 
     public void update(double forwardInput, double strafeInput, double rotationInput) {
-        if (useOdometryTracking) {
-            updateOdomTracking();
-        } else {
-            updateVisionTracking();
-        }
+        if (useOdometryTracking) updateOdomTracking();
+        else updateVisionTracking();
 
-        if (trackingMode) {
-            updateTurretAiming();
-        }
+        if (trackingMode) updateTurretAiming();
 
         drive.setDrivePowers(new PoseVelocity2d(
                 new Vector2d(forwardInput, strafeInput),
@@ -255,6 +262,7 @@ public final class Turret {
     }
 
     // ==================== PRIVATE METHODS ====================
+
     private void pidUpdate() {
         if (pidTimer.seconds() < Params.PID_INTERVAL) return;
         pidTimer.reset();
@@ -263,10 +271,10 @@ public final class Turret {
         double leftVelocity = leftFlywheel.getVelocity();
         double rightVelocity = rightFlywheel.getVelocity();
 
-        currentRPMLeft  = (leftVelocity  / Params.TICKS_PER_REV) * 60.0;
+        currentRPMLeft = (leftVelocity / Params.TICKS_PER_REV) * 60.0;
         currentRPMRight = (rightVelocity / Params.TICKS_PER_REV) * 60.0;
 
-        double errorLeft  = Math.abs(targetRPM - currentRPMLeft);
+        double errorLeft = Math.abs(targetRPM - currentRPMLeft);
         double errorRight = Math.abs(targetRPM - currentRPMRight);
 
         if (errorLeft < PARAMS.toleranceRPM && errorRight < PARAMS.toleranceRPM) {
@@ -300,7 +308,10 @@ public final class Turret {
         packet.put("Turret Power", turretMotor.getPower());
         packet.put("Turret Ticks", turretMotor.getCurrentPosition());
         packet.put("Turret Deg", turretMotor.getCurrentPosition() / PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
-        packet.put("Odom Tracking Active", useOdometryTracking);
+        packet.put("Turret PID P", PARAMS.TURRET_KP * errorAngleDeg);
+        packet.put("Turret PID I", PARAMS.TURRET_KI * turretIntegral);
+        packet.put("Turret PID D", PARAMS.TURRET_KD * (errorAngleDeg - turretLastError) / (timer.seconds() - turretLastTime));
+        packet.put("Odom Active", useOdometryTracking);
         packet.put("Has Aligned", hasAligned);
 
         dashboard.sendTelemetryPacket(packet);
@@ -313,7 +324,6 @@ public final class Turret {
         telemetry.addData("Tag Found", tagFound);
         telemetry.addData("Tracking Error", "%.1f°", errorAngleDeg);
         telemetry.addData("Turret Power", "%.3f", turretMotor.getPower());
-        telemetry.addData("Turret Ticks", turretMotor.getCurrentPosition());
         telemetry.addData("Turret Deg", "%.1f°", turretMotor.getCurrentPosition() / PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
         telemetry.addData("Odom Mode", useOdometryTracking);
         telemetry.addData("Has Aligned", hasAligned);
@@ -354,7 +364,7 @@ public final class Turret {
 
         double currentTurretDeg = turretMotor.getCurrentPosition() / PARAMS.TICKS_PER_BIG_GEAR_DEGREE;
 
-        errorAngleDeg = relativeAngleDeg - currentTurretDeg;
+        errorAngleDeg = currentTurretDeg - relativeAngleDeg;  // positive = need to turn right
 
         tagFound = true;
         ATAngle = 0.0;
@@ -371,50 +381,49 @@ public final class Turret {
             return;
         }
 
+        double currentTime = timer.seconds();
+        double dt = currentTime - turretLastTime;
+        if (dt <= 0 || dt > 0.2) dt = 0.02;  // protect against first frame or lag
+
         double errorDeg = errorAngleDeg - targetAngle;
 
         if (Math.abs(errorDeg) < PARAMS.DEADZONE_DEG) {
             turretMotor.setPower(0);
             hasAligned = true;
+            turretIntegral = 0.0;
+            turretLastError = 0.0;
+            turretLastTime = currentTime;
             return;
         }
 
         hasAligned = false;
 
-        double power = -errorDeg * PARAMS.KP_TURRET_VEL;
+        // PID terms
+        turretIntegral += errorDeg * dt;
+        turretIntegral = Math.max(-PARAMS.TURRET_MAX_INTEGRAL, Math.min(PARAMS.TURRET_MAX_INTEGRAL, turretIntegral));
 
-        // NEW: Soft limit enforcement
+        double derivative = (errorDeg - turretLastError) / dt;
+
+        double pidOutput =
+                PARAMS.TURRET_KP * errorDeg +
+                        PARAMS.TURRET_KI * turretIntegral +
+                        PARAMS.TURRET_KD * derivative;
+
+        double power = -pidOutput;  // sign depends on motor direction
+
+        // Enforce soft limits
         double currentDeg = turretMotor.getCurrentPosition() / PARAMS.TICKS_PER_BIG_GEAR_DEGREE;
+        if (currentDeg >= PARAMS.TURRET_MAX_DEG && power > 0) power = 0;
+        if (currentDeg <= PARAMS.TURRET_MIN_DEG && power < 0) power = 0;
 
-        // Hard block: don't allow movement past limits
-        if (currentDeg >= PARAMS.TURRET_MAX_DEG && power > 0) {
-            power = 0;
-        }
-        if (currentDeg <= PARAMS.TURRET_MIN_DEG && power < 0) {
-            power = 0;
-        }
-
-        // Optional: gentle slowdown near limits (uncomment if you want smoother approach)
-        /*
-        double distToMax = PARAMS.TURRET_MAX_DEG - currentDeg;
-        double distToMin = currentDeg - PARAMS.TURRET_MIN_DEG;
-
-        if (distToMax < 20 && power > 0) {
-            power *= Math.max(0.1, distToMax / 20.0);
-        }
-        if (distToMin < 20 && power < 0) {
-            power *= Math.max(0.1, distToMin / 20.0);
-        }
-        */
-
-        // Existing power clamping
+        // Final power clamp
         power = Math.max(-PARAMS.MAX_TURRET_POWER, Math.min(PARAMS.MAX_TURRET_POWER, power));
 
-        if (Math.abs(power) > 0.001 && Math.abs(power) < PARAMS.MIN_TURRET_POWER) {
-            power = Math.signum(power) * PARAMS.MIN_TURRET_POWER;
-        }
-
         turretMotor.setPower(power);
+
+        // Save for next cycle
+        turretLastError = errorDeg;
+        turretLastTime = currentTime;
     }
 
     private void measureDistance() {

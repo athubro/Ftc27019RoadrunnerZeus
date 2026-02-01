@@ -36,7 +36,7 @@ public final class Turret {
 
         // Vision
         public int TARGET_TAG_ID = 20;
-        public static final double TOLERANCE_DEG = 2.0;
+        public static final double TOLERANCE_DEG = 4.0;
 
         // Turret PID – smoother, faster on large errors
         public static final double TURRET_KP = 0.16;

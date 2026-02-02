@@ -48,7 +48,7 @@ public class SSMyRobot  {
         dashboard = FtcDashboard.getInstance();
     }
 
-
+//=========================================functions =====================================
     public class IntakePower implements Action {
         private double power;
         public IntakePower (double Power) {
@@ -68,6 +68,91 @@ public class SSMyRobot  {
     public Action intakePower(double Power) {
         return new IntakePower(Power);
     }
+
+
+
+    public class StoreBalls implements Action {
+        private String[] target;
+        public StoreBalls (String[] Target) {
+            target = Target;
+        }
+        public boolean run(@NonNull TelemetryPacket pack) {
+            intake.storageUpdate();
+            intake.storeBalls(target);
+            if (intake.ballsStored) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+    }
+
+    public Action storeBalls(String[] Target) {
+        return new StoreBalls(Target);
+    }
+
+
+
+
+    public class ExecuteNextStep implements Action{
+        double timeCap;
+
+        public ExecuteNextStep () {
+            timeCap = 5;
+        }
+        public boolean run(@NonNull TelemetryPacket pack) {
+            intake.storageUpdate();
+            intake.executeNextStep();
+
+            if ((!intake.firstStep.equals("N")) && (!intake.secondStep.equals("N"))) {
+
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    public Action executeNextStep() {
+        return new ExecuteNextStep();
+    }
+
+
+
+    public class CloseGate implements Action {
+
+        public boolean run(@NonNull TelemetryPacket pack) {
+            intake.closeGate();
+            return false;
+        }
+    }
+
+    public Action closeGate() {
+        return new CloseGate();
+    }
+
+
+
+
+
+    public class OpenGate implements Action {
+
+        public boolean run(@NonNull TelemetryPacket pack) {
+            intake.openGate();
+            return false;
+        }
+    }
+
+    public Action openGate() {
+        return new OpenGate();
+    }
+
+
+
+
+
+
+    //=======================================================================================================
 
 /*
     public class ReverseTransfer implements Action {

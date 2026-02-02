@@ -38,20 +38,16 @@ public final class Turret {
         public int TARGET_TAG_ID = 20;
         public static final double TOLERANCE_DEG = 4.0;
 
-        // Turret PID – smoother, faster on large errors
-        public static final double TURRET_KP = 0.16;
-        public static final double TURRET_KI = 0.03;
-        public static final double TURRET_KD = 0.70;
-        public static final double TURRET_MAX_INTEGRAL = 1.8;
+        // Turret motor settings for RUN_TO_POSITION
+        public static final double TURRET_MOTOR_POWER = 0.6;  // Power for RUN_TO_POSITION mode
+        public static final double TURRET_POSITION_TOLERANCE_DEG = 1.4;  // Position tolerance in degrees
 
-        public static final double MAX_TURRET_POWER = 0.92;
-        public static final double DEADZONE_DEG = 1.4;
-
-        // PID update rate (ms) – reduces jitter from over-updating
-        public static final double TURRET_PID_UPDATE_RATE_MS = 90.0;
-
-        // Minimum power threshold (lowered as requested)
-        public static final double MIN_TURRET_POWER = 0.035;  // was 0.05
+        // Turret motor PIDF coefficients (for built-in position controller)
+        // Lower P reduces oscillation, higher D adds damping
+        public double turretKP = 10.0;   // Proportional gain (default is often 10)
+        public double turretKI = 0.0;   // Integral gain
+        public double turretKD = 0.5;   // Derivative gain (adds damping)
+        public double turretKF = 1.0;   // Feedforward gain
 
         // Gear ratio
         public static final double SMALL_GEAR_TEETH = 39.0;
@@ -121,13 +117,10 @@ public final class Turret {
     private double smoothedErrorDeg = 0.0;
 
     private boolean useOdometryTracking = false;
-    private final Vector2d targetPos = new Vector2d(-60, -60);
+    private final Vector2d targetPos = new Vector2d(-55, -55);
 
-    // Turret PID state
-    private double turretIntegral = 0.0;
-    private double turretLastError = 0.0;
-    private double turretLastTime = 0.0;
-    private double lastTurretPidUpdateTime = 0.0;
+    // Turret target position (in ticks)
+    private int turretTargetPosition = 0;
 
     // ==================== CONSTRUCTOR ====================
     public Turret(HardwareMap hardwareMap, Telemetry telemetry, Pose2d initialPose) {
@@ -153,12 +146,21 @@ public final class Turret {
         double batteryVoltage = hardwareMap.voltageSensor.iterator().next().getVoltage();
         PARAMS.kF = -1 * batteryVoltage + 23.7;
 
-        leftFlywheel.setVelocityPIDFCoefficients(PARAMS.kP, PARAMS.kI, PARAMS.kD, PARAMS.kF * 0.98);
-        rightFlywheel.setVelocityPIDFCoefficients(PARAMS.kP * 1.05, PARAMS.kI, PARAMS.kD, PARAMS.kF);
+        leftFlywheel.setVelocityPIDFCoefficients(PARAMS.kP, PARAMS.kI, PARAMS.kD, PARAMS.kF);
+        rightFlywheel.setVelocityPIDFCoefficients(PARAMS.kP, PARAMS.kI, PARAMS.kD, PARAMS.kF);
 
         turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        turretMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        // Set PIDF coefficients to reduce oscillation
+        turretMotor.setPositionPIDFCoefficients(PARAMS.turretKP);
+        // Note: setVelocityPIDFCoefficients can also be set if needed for smoother motion
+        // turretMotor.setVelocityPIDFCoefficients(PARAMS.turretKP, PARAMS.turretKI, PARAMS.turretKD, PARAMS.turretKF);
+
+        // Set initial target position (current position after reset = 0)
+        turretMotor.setTargetPosition(0);
+        turretMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
 
         turretAngle.setPosition(turretAnglePos);
 
@@ -166,8 +168,6 @@ public final class Turret {
         limelight.start();
 
         pidTimer.reset();
-        turretLastTime = timer.seconds();
-        lastTurretPidUpdateTime = timer.seconds();
     }
 
     // ==================== PUBLIC API ====================
@@ -186,13 +186,10 @@ public final class Turret {
         if (enabled) {
             hasAligned = false;
             adjustAiming = true;
-            turretIntegral = 0.0;
-            turretLastError = 0.0;
-            lastTurretPidUpdateTime = timer.seconds();
         } else {
             adjustAiming = false;
             hasAligned = false;
-            turretMotor.setPower(0);
+            turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
         }
     }
 
@@ -223,6 +220,22 @@ public final class Turret {
 
     public void setUseOdometryTracking(boolean enabled) {
         this.useOdometryTracking = enabled;
+    }
+
+    // Methods to tune turret PIDF at runtime
+    public void setTurretPIDFCoefficients(double p, double i, double d, double f) {
+        PARAMS.turretKP = p;
+        PARAMS.turretKI = i;
+        PARAMS.turretKD = d;
+        PARAMS.turretKF = f;
+        turretMotor.setPositionPIDFCoefficients(PARAMS.turretKP);
+        // Uncomment if using velocity PIDF:
+        // turretMotor.setVelocityPIDFCoefficients(PARAMS.turretKP, PARAMS.turretKI, PARAMS.turretKD, PARAMS.turretKF);
+    }
+
+    public void setTurretPositionP(double p) {
+        PARAMS.turretKP = p;
+        turretMotor.setPositionPIDFCoefficients(PARAMS.turretKP);
     }
 
     // ==================== MAIN UPDATE ====================
@@ -320,8 +333,10 @@ public final class Turret {
         packet.put("Distance to Target", disToAprilTag);
         packet.put("Tracking Error (deg)", errorAngleDeg);
         packet.put("Smoothed Error", smoothedErrorDeg);
-        packet.put("Turret Power", turretMotor.getPower());
+        packet.put("Turret Target Pos", turretTargetPosition);
+        packet.put("Turret Current Pos", turretMotor.getCurrentPosition());
         packet.put("Turret Deg", turretMotor.getCurrentPosition() / PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
+        packet.put("Turret Target Deg", turretTargetPosition / PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
         packet.put("Odom Active", useOdometryTracking);
         packet.put("Has Aligned", hasAligned);
 
@@ -335,8 +350,10 @@ public final class Turret {
         telemetry.addData("Tag Found", tagFound);
         telemetry.addData("Tracking Error", "%.1f°", errorAngleDeg);
         telemetry.addData("Smoothed Error", "%.1f°", smoothedErrorDeg);
-        telemetry.addData("Turret Power", "%.3f", turretMotor.getPower());
-        telemetry.addData("Turret Deg", "%.1f°", turretMotor.getCurrentPosition() / PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
+        telemetry.addData("Turret Pos", "%d / %d", turretMotor.getCurrentPosition(), turretTargetPosition);
+        telemetry.addData("Turret Deg", "%.1f° / %.1f°",
+                turretMotor.getCurrentPosition() / PARAMS.TICKS_PER_BIG_GEAR_DEGREE,
+                turretTargetPosition / PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
         telemetry.addData("Odom Mode", useOdometryTracking);
         telemetry.addData("Has Aligned", hasAligned);
     }
@@ -384,71 +401,39 @@ public final class Turret {
 
     private void updateTurretAiming() {
         if (!tagFound) {
-            turretMotor.setPower(0);
+            turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
             return;
         }
 
         if (!continuousTracking && hasAligned) {
-            turretMotor.setPower(0);
+            turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
             return;
         }
-
-        double currentTime = timer.seconds();
-
-        // Throttle PID updates to reduce jitter
-        if (currentTime - lastTurretPidUpdateTime < PARAMS.TURRET_PID_UPDATE_RATE_MS / 1000.0) {
-            return;
-        }
-        lastTurretPidUpdateTime = currentTime;
-
-        double dt = currentTime - turretLastTime;
-        if (dt <= 0 || dt > 0.2) dt = 0.02;
 
         double errorDeg = errorAngleDeg - targetAngle;
 
         // Low-pass filter for smooth response
         smoothedErrorDeg = 0.75 * smoothedErrorDeg + 0.25 * errorDeg;
 
-        if (Math.abs(smoothedErrorDeg) < PARAMS.DEADZONE_DEG) {
-            turretMotor.setPower(0);
+        // Check if aligned
+        if (Math.abs(smoothedErrorDeg) < PARAMS.TURRET_POSITION_TOLERANCE_DEG) {
             hasAligned = true;
-            turretIntegral = 0.0;
-            turretLastError = 0.0;
-            turretLastTime = currentTime;
+            turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
             return;
         }
 
         hasAligned = false;
 
-        // PID calculation
-        turretIntegral += smoothedErrorDeg * dt;
-        turretIntegral = Math.max(-PARAMS.TURRET_MAX_INTEGRAL, Math.min(PARAMS.TURRET_MAX_INTEGRAL, turretIntegral));
-
-        double derivative = (smoothedErrorDeg - turretLastError) / dt;
-
-        double pidOutput =
-                PARAMS.TURRET_KP * smoothedErrorDeg +
-                        PARAMS.TURRET_KI * turretIntegral +
-                        PARAMS.TURRET_KD * derivative;
-
-        double power = -pidOutput;
-
-        // Soft limits
+        // Calculate target position based on error
         double currentDeg = turretMotor.getCurrentPosition() / PARAMS.TICKS_PER_BIG_GEAR_DEGREE;
-        if (currentDeg >= PARAMS.TURRET_MAX_DEG && power > 0) power = 0;
-        if (currentDeg <= PARAMS.TURRET_MIN_DEG && power < 0) power = 0;
+        double desiredDeg = currentDeg - smoothedErrorDeg;
 
-        // Apply minimum power threshold (now lowered)
-        if (Math.abs(power) > 0.001 && Math.abs(power) < PARAMS.MIN_TURRET_POWER) {
-            power = Math.signum(power) * PARAMS.MIN_TURRET_POWER;
-        }
+        // Apply soft limits
+        desiredDeg = clamper(desiredDeg, PARAMS.TURRET_MIN_DEG, PARAMS.TURRET_MAX_DEG);
 
-        power = Math.max(-PARAMS.MAX_TURRET_POWER, Math.min(PARAMS.MAX_TURRET_POWER, power));
-
-        turretMotor.setPower(power);
-
-        turretLastError = smoothedErrorDeg;
-        turretLastTime = currentTime;
+        // Convert to ticks and set target position
+        turretTargetPosition = (int)(desiredDeg * PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
+        turretMotor.setTargetPosition(turretTargetPosition);
     }
 
     private void measureDistance() {

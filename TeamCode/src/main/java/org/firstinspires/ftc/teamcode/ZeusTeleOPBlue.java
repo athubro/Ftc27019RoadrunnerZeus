@@ -89,6 +89,18 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             if (gamepad2.dpad_down) {
                 turret.setTargetRPM(Math.max(0, turret.getTargetRPM() - 50.0));
             }
+            if (gamepad1.dpadUpWasPressed()) {
+                turret.PARAMS.turretKF += 1;
+            }
+            if (gamepad1.dpadDownWasPressed()) {
+                turret.PARAMS.turretKF -= 1;
+            }
+            if (gamepad1.dpadRightWasPressed()) {
+                turret.PARAMS.turretKP += 1;
+            }
+            if (gamepad1.dpadLeftWasPressed()) {
+                turret.PARAMS.turretKP -= 1;
+            }
 
             // Manual turret angle (up/down) - D-pad left/right
             if (gamepad2.dpad_right) {
@@ -163,7 +175,8 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             telemetry.addLine("=== INTAKE ===");
             telemetry.addData("Power", "%.2f", intake.getIntakePower());
             telemetry.addData("Gate", intake.isGateOpen() ? "OPEN" : "CLOSED");
-
+            telemetry.addData("Turret KP", turret.PARAMS.turretKP);
+            telemetry.addData("Turret KF", turret.PARAMS.turretKF);
             telemetry.addLine();
             telemetry.addLine("=== CONTROLS ===");
             telemetry.addLine("GP1: Drive (L-stick), Intake (A/B/X/LT)");

@@ -44,10 +44,10 @@ public final class Turret {
 
         // Turret motor PIDF coefficients (for built-in position controller)
         // Lower P reduces oscillation, higher D adds damping
-        public double turretKP = 10.0;   // Proportional gain (default is often 10)
+        public double turretKP = 3.0;   // Proportional gain (default is often 10)
         public double turretKI = 0.0;   // Integral gain
-        public double turretKD = 0.5;   // Derivative gain (adds damping)
-        public double turretKF = 1.0;   // Feedforward gain
+        public double turretKD = 0.0;   // Derivative gain (adds damping)
+        public double turretKF = 2.0;   // Feedforward gain
 
         // Gear ratio
         public static final double SMALL_GEAR_TEETH = 39.0;
@@ -427,7 +427,7 @@ public final class Turret {
         // Calculate target position based on error
         double currentDeg = turretMotor.getCurrentPosition() / PARAMS.TICKS_PER_BIG_GEAR_DEGREE;
         double desiredDeg = currentDeg - smoothedErrorDeg;
-
+        desiredDeg= normalizeAngleDegrees(desiredDeg);
         // Apply soft limits
         desiredDeg = clamper(desiredDeg, PARAMS.TURRET_MIN_DEG, PARAMS.TURRET_MAX_DEG);
 
@@ -474,6 +474,16 @@ public final class Turret {
         }
         turretAngle.setPosition(turretAnglePos);
     }
+    private static double normalizeAngleDegrees(double angleDeg) {
+        while (angleDeg > 180) {
+            angleDeg -= 360;
+        }
+        while (angleDeg < -180) {
+            angleDeg += 360;
+        }
+        return angleDeg;
+    }
+
 
     // ==================== HELPER METHODS ====================
     private static double clamper(double v, double lo, double hi) {

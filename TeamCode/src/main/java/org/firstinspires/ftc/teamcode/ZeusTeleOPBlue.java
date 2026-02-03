@@ -86,35 +86,39 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             if (gamepad2.dpad_up) {
                 turret.setTargetRPM(turret.getTargetRPM() + 50.0);
             }
-            if (gamepad2.dpad_down) {
+            if (gamepad2.dpadDownWasPressed()) {
                 turret.setTargetRPM(Math.max(0, turret.getTargetRPM() - 50.0));
             }
             if (gamepad1.dpadUpWasPressed()) {
-                turret.PARAMS.turretKF += 1;
+                turret.PARAMS.kP += 1;
+                turret.setFlywheelPID();
             }
             if (gamepad1.dpadDownWasPressed()) {
-                turret.PARAMS.turretKF -= 1;
+                turret.PARAMS.kP -= 1;
+                turret.setFlywheelPID();
             }
             if (gamepad1.dpadRightWasPressed()) {
-                turret.PARAMS.turretKP += 1;
+                turret.PARAMS.kF += 1;
+                turret.setFlywheelPID();
             }
             if (gamepad1.dpadLeftWasPressed()) {
-                turret.PARAMS.turretKP -= 1;
+                turret.PARAMS.kF -= 1;
+                turret.setFlywheelPID();
             }
 
             // Manual turret angle (up/down) - D-pad left/right
             if (gamepad2.dpad_right) {
-                turret.setTurretAngleCommand(1);
+               // turret.setTurretAngleCommand(1);
             } else if (gamepad2.dpad_left) {
-                turret.setTurretAngleCommand(-1);
+               // turret.setTurretAngleCommand(-1);
             } else {
-                turret.setTurretAngleCommand(0);
+               // turret.setTurretAngleCommand(0);
             }
 
             // =========================
             // GAMEPAD 2: INTAKE CONTROLS
             // =========================
-
+/*
             if (gamepad2.x) {
                 intake.openGate();
                 intake.setIntakePower(1.0);
@@ -128,7 +132,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             } else {
                 intake.setIntakePower(0);
             }
-
+*/
             if (gamepad2.right_bumper) intake.openGate();
             if (gamepad2.left_bumper)  intake.closeGate();
             if (gamepad2.b)            intake.toggleGate();  // now active
@@ -142,6 +146,9 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             // =========================
             // TELEMETRY
             // =========================
+            telemetry.addData("kP", turret.PARAMS.kP);
+
+            telemetry.addData("kF", turret.PARAMS.kF);
 
             telemetry.addLine("=== DRIVE ===");
             telemetry.addData("Speed Mode", speedRatio == 1.0 ? "FAST" : (speedRatio == 0.3 ? "SLOW" : "NORMAL"));

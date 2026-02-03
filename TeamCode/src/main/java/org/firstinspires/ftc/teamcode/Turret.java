@@ -25,14 +25,14 @@ public final class Turret {
         public static final double PID_INTERVAL = 0.1;
 
         // Flywheel PID
-        public double kP = 50.0;
+        public double kP = 65.0;
         public double kI = 0.0;
         public double kD = 0.0;
-        public double kF = 10.0;
+        public double kF = 14.748;
 
         // Flywheel motor
         public static final double TICKS_PER_REV = 28.0;
-        public double toleranceRPM = 70.0;
+        public double toleranceRPM = 200.0;
 
         // Vision
         public int TARGET_TAG_ID = 20;
@@ -72,7 +72,7 @@ public final class Turret {
     // ==================== HARDWARE ====================
     public final DcMotorEx leftFlywheel;
     public final DcMotorEx rightFlywheel;
-    public final Servo turretAngle;
+    public final Servo shooterAngle;
     public final DcMotorEx turretMotor;
 
     public final Limelight3A limelight;
@@ -99,8 +99,8 @@ public final class Turret {
     public boolean flywheelUpToSpeed = false;
     private double speedCheckTimer = 0.0;
 
-    public double turretAnglePos = 0.5;
-    public int turretAngleCommand = 0;
+    public double shooterAnglePos = 0.5;
+    public int shooterAngleCommand = 0;
     private static final double TURRET_ANGLE_STEP = 0.009;
     public boolean autoAngleEnabled = false;
 
@@ -130,7 +130,7 @@ public final class Turret {
 
         leftFlywheel = hardwareMap.get(DcMotorEx.class, "leftFlywheel");
         rightFlywheel = hardwareMap.get(DcMotorEx.class, "rightFlywheel");
-        turretAngle = hardwareMap.get(Servo.class, "shooterAngle");
+        shooterAngle = hardwareMap.get(Servo.class, "shooterAngle");
         turretMotor = hardwareMap.get(DcMotorEx.class, "turretMotor");
 
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -162,7 +162,7 @@ public final class Turret {
         turretMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
 
-        turretAngle.setPosition(turretAnglePos);
+        shooterAngle.setPosition(shooterAnglePos);
 
         limelight.setPollRateHz(100);
         limelight.start();
@@ -181,6 +181,11 @@ public final class Turret {
     public double getDistanceToTarget() { return disToAprilTag; }
     public boolean isTagFound() { return tagFound; }
 
+
+    public void setFlywheelPID() {
+        leftFlywheel.setVelocityPIDFCoefficients(PARAMS.kP, PARAMS.kI, PARAMS.kD, PARAMS.kF);
+        rightFlywheel.setVelocityPIDFCoefficients(PARAMS.kP, PARAMS.kI, PARAMS.kD, PARAMS.kF);
+    }
     public void setTrackingMode(boolean enabled) {
         this.trackingMode = enabled;
         if (enabled) {
@@ -195,14 +200,14 @@ public final class Turret {
 
     public void setContinuousTracking(boolean enabled) { this.continuousTracking = enabled; }
     public double getTrackingError() { return errorAngleDeg; }
-    public void setTurretAngleCommand(int cmd) { this.turretAngleCommand = cmd; }
+    public void setshooterAngleCommand(int cmd) { this.shooterAngleCommand = cmd; }
     public void setAutoAngleEnabled(boolean enabled) { this.autoAngleEnabled = enabled; }
-    public void setTurretAnglePosition(double pos) {
-        this.turretAnglePos = clamper(pos, 0.0, 1.0);
-        turretAngle.setPosition(turretAnglePos);
+    public void setshooterAnglePosition(double pos) {
+        this.shooterAnglePos = clamper(pos, 0.0, 1.0);
+        shooterAngle.setPosition(shooterAnglePos);
     }
     public boolean isAligned() { return hasAligned; }
-    public double getTurretAnglePosition() { return turretAnglePos; }
+    public double getshooterAnglePosition() { return shooterAnglePos; }
 
     public double getTurretAimPosition() { return 0.5; }
     public void setTurretAimPosition(double pos) { /* no-op */ }
@@ -252,10 +257,10 @@ public final class Turret {
 
         if (tagFound && !useOdometryTracking) {
             if (autoRPMEnabled) calcTargetRPM();
-            if (autoAngleEnabled) calcTurretAngle();
+            if (autoAngleEnabled) calcshooterAngle();
         }
 
-        updateTurretAngle();
+        updateshooterAngle();
         pidUpdate();
         drive.updatePoseEstimate();
         sendTelemetry();
@@ -279,10 +284,10 @@ public final class Turret {
 
         if (tagFound && !useOdometryTracking) {
             if (autoRPMEnabled) calcTargetRPM();
-            if (autoAngleEnabled) calcTurretAngle();
+            if (autoAngleEnabled) calcshooterAngle();
         }
 
-        updateTurretAngle();
+        updateshooterAngle();
         pidUpdate();
         drive.updatePoseEstimate();
         sendTelemetry();
@@ -304,7 +309,7 @@ public final class Turret {
         double errorLeft = Math.abs(targetRPM - currentRPMLeft);
         double errorRight = Math.abs(targetRPM - currentRPMRight);
 
-        if (errorLeft < PARAMS.toleranceRPM && errorRight < PARAMS.toleranceRPM) {
+        if ( errorRight < PARAMS.toleranceRPM) {//errorLeft < PARAMS.toleranceRPM &&
             if (timer.seconds() - speedCheckTimer > 0.1) {
                 flywheelUpToSpeed = true;
             }
@@ -436,6 +441,15 @@ public final class Turret {
         turretMotor.setTargetPosition(turretTargetPosition);
     }
 
+    public void manualTurretAngle(double degrees) {
+        double desiredDeg;
+        desiredDeg = clamper(degrees, PARAMS.TURRET_MIN_DEG, PARAMS.TURRET_MAX_DEG);
+
+        // Convert to ticks and set target position
+        turretTargetPosition = (int)(desiredDeg * PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
+        turretMotor.setTargetPosition(turretTargetPosition);
+    }
+
     private void measureDistance() {
         if (tagFound) {
             disToAprilTag = (ATHeight - LimelightHeight) / Math.tan((ATAngle + LimelightAngle) * (Math.PI / 180));
@@ -450,7 +464,7 @@ public final class Turret {
         }
     }
 
-    private void calcTurretAngle() {
+    private void calcshooterAngle() {
         double x = disToAprilTag;
         if (tagFound) {
             double shooterAngleSetting;
@@ -459,20 +473,20 @@ public final class Turret {
             } else {
                 shooterAngleSetting = 0.0;
             }
-            turretAnglePos = clamper(shooterAngleSetting, 0.0, 1.0);
+            shooterAnglePos = clamper(shooterAngleSetting, 0.0, 1.0);
         }
     }
 
-    private void updateTurretAngle() {
+    public void updateshooterAngle() {
         if (!autoAngleEnabled) {
-            if (turretAngleCommand > 0) {
-                turretAnglePos += TURRET_ANGLE_STEP;
-            } else if (turretAngleCommand < 0) {
-                turretAnglePos -= TURRET_ANGLE_STEP;
+            if (shooterAngleCommand > 0) {
+                shooterAnglePos += TURRET_ANGLE_STEP;
+            } else if (shooterAngleCommand < 0) {
+                shooterAnglePos -= TURRET_ANGLE_STEP;
             }
-            turretAnglePos = clamper(turretAnglePos, 0.0, 1.0);
+            shooterAnglePos = clamper(shooterAnglePos, 0.0, 1.0);
         }
-        turretAngle.setPosition(turretAnglePos);
+        shooterAngle.setPosition(shooterAnglePos);
     }
     private static double normalizeAngleDegrees(double angleDeg) {
         while (angleDeg > 180) {

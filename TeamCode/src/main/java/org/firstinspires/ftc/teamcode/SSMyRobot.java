@@ -36,8 +36,8 @@ public class SSMyRobot  {
     private double previousTime =0;
     public final FtcDashboard dashboard;
 
-    public SSMyRobot (HardwareMap hardwareMap, MecanumDrive myDrive, Intake intake, Turret turret, Pose2d newPos) {
-        intake = intake;
+    public SSMyRobot (HardwareMap hardwareMap, MecanumDrive myDrive, Intake myIntake, Turret turret, Pose2d newPos) {
+        intake = myIntake;
 
         drive = myDrive;
         turretSystem=turret;
@@ -288,7 +288,7 @@ public class SSMyRobot  {
             pack.put("shooting enabled",turretSystem.shootingEnabled);
             pack.put("tracking mode",turretSystem.trackingMode);
             packet.put("time gap", generalTimer.seconds()-previousTime);
-            previousTime=generalTimer.seconds();
+            //previousTime=generalTimer.seconds();
 
             if (updateFlag){
                 dashboard.sendTelemetryPacket(packet);
@@ -359,7 +359,35 @@ public class SSMyRobot  {
         }
     }
 
+    public class WaitEmptyStorage implements  Action{
+        public boolean run(@NonNull TelemetryPacket pack){
+            intake.storageUpdate();
+            if (intake.ballCount == 0) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+    }
 
+    public Action waitEmptyStorage(){
+        return new WaitEmptyStorage();
+    }
+
+    public class WaitSpinUp implements  Action{
+        public boolean run(@NonNull TelemetryPacket pack){
+            turretSystem.update();
+            if (turretSystem.flywheelUpToSpeed) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+    }
+
+    public Action waitSpinUp(){
+        return new WaitSpinUp();
+    }
 
 
     public class AimInit implements  Action{
@@ -580,6 +608,69 @@ public class SSMyRobot  {
     public Action shooterSpinUp() {
         return new ShooterSpinUp();
     }
+
+
+    public class SetTargetRPM implements Action {
+            double rpm;
+
+        public SetTargetRPM (double RPM) {
+            rpm = RPM;
+        }
+
+        public boolean run(@NonNull TelemetryPacket pack) {
+            turretSystem.targetRPM = rpm;
+            return false;
+        }
+    }
+
+    public Action setTargetRPM(double RPM) {
+        return new SetTargetRPM(RPM);
+    }
+
+
+
+    public class SetTurretAngle implements Action {
+        double degrees;
+
+        public SetTurretAngle (double Degrees) {
+            degrees = Degrees;
+        }
+
+        public boolean run(@NonNull TelemetryPacket pack) {
+            turretSystem.manualTurretAngle(degrees);
+            return false;
+        }
+    }
+
+    public Action setTurretAnlge(double Degrees) {
+        return new SetTurretAngle(Degrees);
+    }
+
+
+
+
+    public class SetShooterAngle implements Action {
+        double pos;
+
+        public SetShooterAngle (double Pos) {
+            pos = Pos;
+        }
+
+        public boolean run(@NonNull TelemetryPacket pack) {
+            turretSystem.shooterAngleCommand = 0;
+
+            turretSystem.shooterAnglePos = pos;
+            turretSystem.updateshooterAngle();
+            return false;
+        }
+    }
+
+    public Action setShooterAngle(double Pos) {
+        return new SetShooterAngle(Pos);
+    }
+
+
+
 
     public class ShooterStop implements Action {
         public boolean run(@NonNull TelemetryPacket pack) {

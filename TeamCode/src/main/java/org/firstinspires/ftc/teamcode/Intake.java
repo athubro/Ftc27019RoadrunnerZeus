@@ -166,6 +166,9 @@ public final class Intake {
        // telemetry.update();
     }
 
+    public void generalTimerReset() {
+        generalTimer.reset();
+    }
 
     public void countBalls() {
         ballCount=0;

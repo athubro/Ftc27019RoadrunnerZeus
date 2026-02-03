@@ -6,7 +6,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-@TeleOp(name = "ZeusTeleOPBlue v1", group = "TeleOp")
+@TeleOp(name = "ZeusTeleOPBlue", group = "TeleOp")
 public class ZeusTeleOPBlue extends LinearOpMode {
 
     private Turret turret;
@@ -14,43 +14,39 @@ public class ZeusTeleOPBlue extends LinearOpMode {
     private Pose2d initialPose = new Pose2d(0, 0, 0);
 
     private double speedRatio = 0.75;
-    public String[] motiff = {"P", "P" ,"G"};
 
+    private boolean usingOdomTracking = false;
 
     @Override
     public void runOpMode() {
 
-        // Initialize all systems
         turret = new Turret(hardwareMap, telemetry, initialPose);
         intake = new Intake(hardwareMap, telemetry);
 
-        // Configure turret
         turret.PARAMS.TARGET_TAG_ID = 20;
-        turret.setAutoAngleEnabled(false);  // Start with manual angle control
-        turret.setAutoRPMEnabled(false);    // Start with manual RPM control
-        turret.setTrackingMode(false);      // Start with manual heading control
+        turret.setAutoAngleEnabled(false);
+        turret.setAutoRPMEnabled(false);
+        turret.setTrackingMode(false);
+        turret.setContinuousTracking(true);
+        turret.setUseOdometryTracking(false);
 
         telemetry.addLine("=== SYSTEM READY ===");
         telemetry.addLine("Turret + Drive + Intake Initialized");
         telemetry.addLine("Target Tag ID: 20");
         telemetry.addLine();
-        telemetry.addLine("Gamepad 1: Drive Controls");
-        telemetry.addLine("Gamepad 2: Turret & Intake Controls");
+        telemetry.addLine("Gamepad 1: Drive + Intake");
+        telemetry.addLine("Gamepad 2: Turret Controls");
         telemetry.addLine();
+        telemetry.addLine("GP2 B: Toggle FULL AUTO (Vision/RPM/Angle)");
+        telemetry.addLine("GP2 A: Toggle Vision vs Odom Tracking");
+        telemetry.addLine("GP2 Right Stick X: MANUAL TURRET YAW (when tracking OFF)");
         telemetry.addLine("Press START to begin");
         telemetry.update();
 
         waitForStart();
 
-        // Button state trackers for toggles
-        boolean trackingToggleLast = false;
-        boolean autoRPMToggleLast = false;
-        boolean autoAngleToggleLast = false;
-        boolean gateToggleLast = false;
-
-
         while (opModeIsActive()) {
-            intake.storageUpdate();
+
             // =========================
             // GAMEPAD 1: DRIVE CONTROLS
             // =========================
@@ -59,91 +55,57 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             double strafe = -speedRatio * gamepad1.left_stick_x;
             double rotation = -speedRatio * gamepad1.right_stick_x;
 
-            // Speed control
-            if (gamepad1.right_bumper) {
-                speedRatio = 1.0;  // Full speed
-            } else if (gamepad1.left_bumper) {
-                speedRatio = 0.3;  // Slow speed
-            } else {
-                speedRatio = 0.75; // Normal speed
-            }
-            //========================= sorting temportay
-            if (gamepad1.aWasPressed()) {
-                intake.storeBalls(motiff);
-            }
-            if (gamepad1.bWasPressed()) {
-                intake.executeNextStep();
-            }
-            if (gamepad1.yWasPressed()) {
-                intake.resetAll();
-            }
-
-            if (gamepad1.dpadUpWasPressed()) {
-                motiff[0] = "P";
-                motiff[1] = "P";
-                motiff[2] = "G";
-
-            }
-            if (gamepad1.dpadDownWasPressed()) {
-
-                motiff[0] = "G";
-                motiff[1] = "P";
-                motiff[2] = "P";
-
-            }if (gamepad1.dpadLeftWasPressed()) {
-
-                motiff[0] = "P";
-                motiff[1] = "G";
-                motiff[2] = "P";
-
-            }
-
+            if (gamepad1.right_bumper)      speedRatio = 1.0;
+            else if (gamepad1.left_bumper)  speedRatio = 0.3;
+            else                            speedRatio = 0.75;
 
             // =========================
             // GAMEPAD 2: TURRET CONTROLS
             // =========================
 
-            // Toggle tracking mode (A button)
-            if (gamepad2.aWasPressed()) {
-                turret.setTrackingMode(!turret.trackingMode);
-                turret.setAutoAngleEnabled(!turret.autoAngleEnabled);
-                turret.setAutoRPMEnabled(!turret.autoRPMEnabled);
-
+            // Toggle FULL AUTO MODE (Vision + RPM + Angle) - using B button
+            if (gamepad2.b) {
+                boolean newState = !turret.trackingMode;
+                turret.setTrackingMode(newState);
+                turret.setAutoAngleEnabled(newState);
+                turret.setAutoRPMEnabled(newState);
+                sleep(200); // simple debounce
             }
 
-
-            // Toggle auto RPM (X button)
-            if (gamepad2.xWasPressed()) {
-
+            // Toggle Vision vs Odom tracking - using A button
+            if (gamepad2.a) {
+                usingOdomTracking = !usingOdomTracking;
+                turret.setUseOdometryTracking(usingOdomTracking);
+                sleep(200); // debounce
             }
 
+            // Shooting
+            turret.setShootingEnabled(gamepad2.right_trigger > 0.2);
 
-            // Toggle auto angle (Y button)
-            if (gamepad2.yWasPressed()) {
-
-            }
-
-
-            // Enable/disable shooting with triggers
-            if (gamepad2.right_trigger > 0.2) {
-                turret.setShootingEnabled(true);
-            } else {
-                turret.setShootingEnabled(false);
-            }
-
-            // Manual RPM adjustment (D-pad up/down)
-            if (gamepad2.dpadUpWasPressed()) {
+            // Manual RPM (D-pad up/down)
+            if (gamepad2.dpad_up) {
                 turret.setTargetRPM(turret.getTargetRPM() + 50.0);
             }
-            if (gamepad2.dpadDownWasPressed()) {
+            if (gamepad2.dpad_down) {
                 turret.setTargetRPM(Math.max(0, turret.getTargetRPM() - 50.0));
             }
+            if (gamepad1.dpadUpWasPressed()) {
+                turret.PARAMS.turretKF += 1;
+            }
+            if (gamepad1.dpadDownWasPressed()) {
+                turret.PARAMS.turretKF -= 1;
+            }
+            if (gamepad1.dpadRightWasPressed()) {
+                turret.PARAMS.turretKP += 1;
+            }
+            if (gamepad1.dpadLeftWasPressed()) {
+                turret.PARAMS.turretKP -= 1;
+            }
 
-
-            // Manual turret angle control (D-pad left/right)
-            if (gamepad2.dpadRightWasPressed()) {
+            // Manual turret angle (up/down) - D-pad left/right
+            if (gamepad2.dpad_right) {
                 turret.setTurretAngleCommand(1);
-            } else if (gamepad2.dpadLeftWasPressed()) {
+            } else if (gamepad2.dpad_left) {
                 turret.setTurretAngleCommand(-1);
             } else {
                 turret.setTurretAngleCommand(0);
@@ -153,71 +115,53 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             // GAMEPAD 2: INTAKE CONTROLS
             // =========================
 
-            // Intake motor control with left trigger (intake) and left stick Y (outtake)
-            if (gamepad1.right_trigger > 0.1) {
-                intake.setIntakePower(gamepad1.right_trigger);  // Intake
+            if (gamepad2.x) {
+                intake.openGate();
+                intake.setIntakePower(1.0);
+            } else if (gamepad2.y) {
                 intake.closeGate();
-            } else if (Math.abs(gamepad1.left_trigger) > 0.1) {
-                intake.setIntakePower(-gamepad1.left_trigger);  // Manual control
+                intake.setIntakePower(1.0);
+            } else if (gamepad2.left_trigger > 0.1) {
+                intake.setIntakePower(gamepad2.left_trigger);
+            } else if (Math.abs(gamepad2.left_stick_y) > 0.1) {
+                intake.setIntakePower(gamepad2.left_stick_y);
             } else {
-                intake.setIntakePower(0);  // Stop
-            }
-            if (gamepad2.left_trigger > 0.1) {
-                intake.setIntakePower(gamepad2.left_trigger);  // Intake
-                intake.openGate();
+                intake.setIntakePower(0);
             }
 
-            // Gate control
-            if (gamepad2.rightBumperWasPressed()) {
-                intake.openGate();
-            }
-            if (gamepad2.leftBumperWasPressed()) {
-                intake.closeGate();
-            }
-
-            // Toggle gate (B button)
-            if (gamepad2.bWasPressed()) {
-                intake.toggleGate();
-            }
-
+            if (gamepad2.right_bumper) intake.openGate();
+            if (gamepad2.left_bumper)  intake.closeGate();
+            if (gamepad2.b)            intake.toggleGate();  // now active
 
             // =========================
             // UPDATE ALL SYSTEMS
             // =========================
 
-            // Update turret with drive controls
             turret.update(forward, strafe, rotation);
 
             // =========================
             // TELEMETRY
             // =========================
-           // telemetry.addData("storage", intake.storage);
-            telemetry.addData("back(top)", intake.storage[0]);
-            telemetry.addData("middle ", intake.storage[1]);
-            telemetry.addData("front (bottom)", intake.storage[2]);
-            telemetry.addData("motiff0", motiff[0]);
-            telemetry.addData("motiff1", motiff[1]);
-            telemetry.addData("motiff2", motiff[2]);
-
-            telemetry.addData("firststep", intake.firstStep);
-            telemetry.addData("secondstep", intake.secondStep);
-            telemetry.addData("ballCount", intake.ballCount);
-            telemetry.addData("ball stored?", intake.ballsStored);
 
             telemetry.addLine("=== DRIVE ===");
             telemetry.addData("Speed Mode", speedRatio == 1.0 ? "FAST" : (speedRatio == 0.3 ? "SLOW" : "NORMAL"));
-            telemetry.addData("Position", "X: %.1f, Y: %.1f",
-                    turret.getPose().position.x, turret.getPose().position.y);
+            telemetry.addData("Position", "X: %.1f  Y: %.1f  H: %.1f°",
+                    turret.getPose().position.x,
+                    turret.getPose().position.y,
+                    Math.toDegrees(turret.getPose().heading.toDouble()));
 
             telemetry.addLine();
             telemetry.addLine("=== TURRET ===");
-            telemetry.addData("Tracking Mode", turret.trackingMode ? "AUTO" : "MANUAL");
+            telemetry.addData("Mode", turret.trackingMode ? "AUTO" : "MANUAL");
+            telemetry.addData("Tracking Source", usingOdomTracking ? "ODOMETRY (-60, -60)" : "LIMELIGHT");
+            telemetry.addData("Aligned", turret.isAligned() ? "YES" : "NO");
             telemetry.addData("Auto RPM", turret.autoRPMEnabled ? "ON" : "OFF");
             telemetry.addData("Auto Angle", turret.autoAngleEnabled ? "ON" : "OFF");
             telemetry.addData("Tag Found", turret.isTagFound() ? "YES" : "NO");
             telemetry.addData("Distance", "%.1f in", turret.getDistanceToTarget());
             telemetry.addData("Tracking Error", "%.1f°", turret.getTrackingError());
-            telemetry.addData("AT Angle", "%.1f°", turret.ATAngle);
+            telemetry.addData("Turret Yaw Power", "%.3f", turret.turretMotor.getPower());
+            telemetry.addData("Turret Yaw Deg", "%.1f°", turret.turretMotor.getCurrentPosition() / turret.PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
 
             telemetry.addLine();
             telemetry.addLine("=== SHOOTER ===");
@@ -226,25 +170,23 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             telemetry.addData("Right RPM", "%.0f", turret.getCurrentRPMRight());
             telemetry.addData("Target RPM", "%.0f", turret.getTargetRPM());
             telemetry.addData("Up to Speed", turret.isUpToSpeed() ? "READY" : "SPINNING UP");
-            telemetry.addData("Turret Angle", "%.2f", turret.getTurretAnglePosition());
 
             telemetry.addLine();
             telemetry.addLine("=== INTAKE ===");
-            telemetry.addData("Intake Power", "%.2f", intake.getIntakePower());
+            telemetry.addData("Power", "%.2f", intake.getIntakePower());
             telemetry.addData("Gate", intake.isGateOpen() ? "OPEN" : "CLOSED");
-
+            telemetry.addData("Turret KP", turret.PARAMS.turretKP);
+            telemetry.addData("Turret KF", turret.PARAMS.turretKF);
             telemetry.addLine();
             telemetry.addLine("=== CONTROLS ===");
-            telemetry.addLine("GP1: Drive (L-stick move, R-stick rotate)");
+            telemetry.addLine("GP1: Drive (L-stick), Intake (A/B/X/LT)");
             telemetry.addLine("GP1: RB=Fast, LB=Slow");
-            telemetry.addLine("GP2-A: Toggle Tracking");
-            telemetry.addLine("GP2-X: Toggle Auto RPM");
-            telemetry.addLine("GP2-Y: Toggle Auto Angle");
-            telemetry.addLine("GP2-RT: Enable Shooting");
-            telemetry.addLine("GP2-LT: Run Intake");
-            telemetry.addLine("GP2-RB: Open Gate");
-            telemetry.addLine("GP2-LB: Close Gate");
-            telemetry.addLine("GP2-Dpad: Manual RPM/Angle");
+            telemetry.addLine("GP2-B: Toggle FULL AUTO (Vision + RPM + Angle)");
+            telemetry.addLine("GP2-A: Toggle Vision vs Odom Tracking");
+            telemetry.addLine("GP2 Right Stick X: MANUAL TURRET YAW (when tracking OFF)");
+            telemetry.addLine("GP2-RT: Shooting");
+            telemetry.addLine("GP2-Dpad: RPM (up/down) / Angle (left/right)");
+            telemetry.addLine("GP2-B: Toggle Gate");
 
             telemetry.update();
         }

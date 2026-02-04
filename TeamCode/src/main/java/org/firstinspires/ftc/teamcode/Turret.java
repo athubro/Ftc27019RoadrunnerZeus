@@ -83,23 +83,23 @@ public final class Turret {
     public double currentRPMRight = 0.0;
     public double targetRPM = 3000.0;
     public boolean flywheelUpToSpeed = false;
-    private double speedCheckTimer = 0.0;
+    public double speedCheckTimer = 0.0;
     public double turretAnglePos = 0.5;
     public int turretAngleCommand = 0;
-    private static final double TURRET_ANGLE_STEP = 0.009;
+    public static final double TURRET_ANGLE_STEP = 0.009;
     public boolean autoAngleEnabled = false;
     public double targetAngle = 0;
     public boolean adjustAiming = false;
-    private boolean hasAligned = false;
+    public boolean hasAligned = false;
     public boolean shootingEnabled = false;
     public boolean autoRPMEnabled = false;
     public boolean trackingMode = false;
     public boolean continuousTracking = true;
     public double errorAngleDeg = 0.0;
-    private double smoothedErrorDeg = 0.0;
-    private boolean useOdometryTracking = false;
-    private final Vector2d targetPos = new Vector2d(-53, -60); // Turret target position (in ticks)
-    private int turretTargetPosition = 0;
+    public double smoothedErrorDeg = 0.0;
+    public boolean useOdometryTracking = false;
+    public final Vector2d targetPos = new Vector2d(-53, -60); // Turret target position (in ticks)
+    public int turretTargetPosition = 0;
 
     // Motiff detection (added back from old code)
     public String[] motiff = {"N", "N", "N"};
@@ -340,8 +340,8 @@ public final class Turret {
         sendTelemetry();
     }
 
-    // ==================== PRIVATE METHODS ====================
-    private void pidUpdate() {
+    // ==================== public METHODS ====================
+    public void pidUpdate() {
         if (pidTimer.seconds() < Params.PID_INTERVAL) return;
         pidTimer.reset();
         double targetVelocity = (targetRPM / 60.0) * Params.TICKS_PER_REV;
@@ -368,7 +368,7 @@ public final class Turret {
         }
     }
 
-    private void sendTelemetry() {
+    public void sendTelemetry() {
         TelemetryPacket packet = new TelemetryPacket();
         packet.put("Left RPM", currentRPMLeft);
         packet.put("Right RPM", currentRPMRight);
@@ -400,7 +400,7 @@ public final class Turret {
         telemetry.addData("Has Aligned", hasAligned);
     }
 
-    private void updateVisionTracking() {
+    public void updateVisionTracking() {
         tagFound = false;
         errorAngleDeg = 0.0;
         LLResult result = limelight.getLatestResult();
@@ -417,7 +417,7 @@ public final class Turret {
         }
     }
 
-    private void updateOdomTracking() {
+    public void updateOdomTracking() {
         drive.updatePoseEstimate();
         Pose2d pose = drive.localizer.getPose();
         Vector2d robotPos = pose.position;
@@ -433,7 +433,7 @@ public final class Turret {
         ATAngle = 0.0;
     }
 
-    private void updateTurretAiming() {
+    public void updateTurretAiming() {
         if (!tagFound) {
             turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
             return;
@@ -463,13 +463,13 @@ public final class Turret {
         turretMotor.setTargetPosition(turretTargetPosition);
     }
 
-    private void measureDistance() {
+    public void measureDistance() {
         if (tagFound) {
             disToAprilTag = (ATHeight - LimelightHeight) / Math.tan((ATAngle + LimelightAngle) * (Math.PI / 180));
         }
     }
 
-    private void calcTargetRPM() {
+    public void calcTargetRPM() {
         double x = disToAprilTag;
         if (tagFound) {
             targetRPM = 12.6*x + 1586;
@@ -477,7 +477,7 @@ public final class Turret {
         }
     }
 
-    private void calcTurretAngle() {
+    public void calcTurretAngle() {
         double x = disToAprilTag;
         if (tagFound) {
             double shooterAngleSetting;
@@ -490,7 +490,7 @@ public final class Turret {
         }
     }
 
-    private void updateTurretAngle() {
+    public void updateTurretAngle() {
         if (!autoAngleEnabled) {
             if (turretAngleCommand > 0) {
                 turretAnglePos += TURRET_ANGLE_STEP;
@@ -502,7 +502,7 @@ public final class Turret {
         turretAngle.setPosition(turretAnglePos);
     }
 
-    private static double normalizeAngleDegrees(double angleDeg) {
+    public static double normalizeAngleDegrees(double angleDeg) {
         while (angleDeg > 180) {
             angleDeg -= 360;
         }
@@ -513,7 +513,7 @@ public final class Turret {
     }
 
     // ==================== HELPER METHODS ====================
-    private static double clamper(double v, double lo, double hi) {
+    public static double clamper(double v, double lo, double hi) {
         return Math.max(lo, Math.min(hi, v));
     }
 }

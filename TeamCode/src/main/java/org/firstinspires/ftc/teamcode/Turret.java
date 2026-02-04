@@ -82,8 +82,8 @@ public final class Turret {
 
     // ==================== DISTANCE MEASUREMENT ====================
     public final double ATHeight = 29.5;
-    public final double LimelightHeight = 13.5;
-    public final double LimelightAngle = 23.2;
+    public final double LimelightHeight = 14.7;
+    public final double LimelightAngle = 13.6;
     public double disToAprilTag = 0;
     public double ATAngle = 0;
     public boolean tagFound = false;
@@ -459,8 +459,14 @@ public final class Turret {
     private void calcTargetRPM() {
         double x = disToAprilTag;
         if (tagFound) {
-            targetRPM = 0.00284 * x * x * x - 0.343 * x * x + 23.8 * x + 2022;
-            targetRPM = clamper(targetRPM, 2300, 3180);
+            if (x<90){
+                targetRPM = 0.00284 * x * x * x - 0.343 * x * x + 23.8 * x + 2022;
+                targetRPM = clamper(targetRPM, 2300, 3180);
+            } else{
+                targetRPM =3100;
+
+            }
+
         }
     }
 
@@ -468,7 +474,7 @@ public final class Turret {
         double x = disToAprilTag;
         if (tagFound) {
             double shooterAngleSetting;
-            if (x < 75) {
+            if (x < 85) {
                 shooterAngleSetting = -0.0000046 * x * x * x + 0.00108 * x * x - 0.0885 * x + 2.54;
             } else {
                 shooterAngleSetting = 0.0;

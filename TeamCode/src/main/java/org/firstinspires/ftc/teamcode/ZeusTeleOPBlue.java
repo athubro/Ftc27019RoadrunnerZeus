@@ -10,10 +10,16 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 public class ZeusTeleOPBlue extends LinearOpMode {
 
     private Turret turret;
+    private MecanumDrive drive;
+
     private Intake intake;
     private Pose2d initialPose = new Pose2d(0, 0, 0);
 
     private double speedRatio = 0.75;
+
+    private double shooterDegrees = 0.5;
+    private double turretAngle = 0;
+
 
     private boolean usingOdomTracking = false;
 
@@ -22,6 +28,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
 
         turret = new Turret(hardwareMap, telemetry, initialPose);
         intake = new Intake(hardwareMap, telemetry);
+        drive = new MecanumDrive(hardwareMap, initialPose);
 
         turret.PARAMS.TARGET_TAG_ID = 20;
         turret.setAutoAngleEnabled(false);
@@ -50,11 +57,11 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             // =========================
             // GAMEPAD 1: DRIVE CONTROLS
             // =========================
-
+            /*
             double forward = -speedRatio * gamepad1.left_stick_y;
             double strafe = -speedRatio * gamepad1.left_stick_x;
             double rotation = -speedRatio * gamepad1.right_stick_x;
-
+*/
             if (gamepad1.right_bumper)      speedRatio = 1.0;
             else if (gamepad1.left_bumper)  speedRatio = 0.3;
             else                            speedRatio = 0.75;
@@ -89,21 +96,22 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             if (gamepad2.dpadDownWasPressed()) {
                 turret.setTargetRPM(Math.max(0, turret.getTargetRPM() - 50.0));
             }
-            if (gamepad1.dpadUpWasPressed()) {
-                turret.PARAMS.kP += 1;
-                turret.setFlywheelPID();
-            }
-            if (gamepad1.dpadDownWasPressed()) {
-                turret.PARAMS.kP -= 1;
-                turret.setFlywheelPID();
+            if (gamepad1.dpadLeftWasPressed()) {
+                turretAngle += 1;
+                turret.manualTurretAngle(turretAngle);
             }
             if (gamepad1.dpadRightWasPressed()) {
-                turret.PARAMS.kF += 1;
-                turret.setFlywheelPID();
+                turretAngle -= 1;
+                turret.manualTurretAngle(turretAngle);
             }
-            if (gamepad1.dpadLeftWasPressed()) {
-                turret.PARAMS.kF -= 1;
-                turret.setFlywheelPID();
+            if (gamepad1.dpadUpWasPressed()) {
+                shooterDegrees += 0.1;
+                turret.setshooterAnglePosition(shooterDegrees);
+            }
+            if (gamepad1.dpadDownWasPressed()) {
+                shooterDegrees -= 0.1;
+                turret.setshooterAnglePosition(shooterDegrees);
+
             }
 
             // Manual turret angle (up/down) - D-pad left/right
@@ -132,7 +140,20 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             } else {
                 intake.setIntakePower(0);
             }
+
+
 */
+            if (gamepad1.right_trigger>0.1) {
+                intake.setIntakePower(gamepad1.right_trigger);
+                intake.closeGate();
+            } else if (gamepad1.left_trigger > 0.1) {
+                intake.setIntakePower(-gamepad1.left_trigger);
+            }
+            if (gamepad2.left_trigger > 0.1) {
+                intake.setIntakePower(gamepad2.right_trigger);
+                intake.openGate();
+            }
+
             if (gamepad2.right_bumper) intake.openGate();
             if (gamepad2.left_bumper)  intake.closeGate();
             if (gamepad2.b)            intake.toggleGate();  // now active
@@ -140,12 +161,17 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             // =========================
             // UPDATE ALL SYSTEMS
             // =========================
+            turret.update();
 
-            turret.update(forward, strafe, rotation);
 
+            Vector2d translation = new Vector2d(( speedRatio*(-gamepad1.left_stick_y)), ( speedRatio*(-gamepad1.left_stick_x)));
+            double rotation = -speedRatio*gamepad1.right_stick_x;
+            drive.setDrivePowers(new PoseVelocity2d(translation, rotation));
+            drive.updatePoseEstimate();
             // =========================
             // TELEMETRY
             // =========================
+            telemetry.addData("shooter degrees", shooterDegrees);
             telemetry.addData("kP", turret.PARAMS.kP);
 
             telemetry.addData("kF", turret.PARAMS.kF);
@@ -165,6 +191,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             telemetry.addData("Auto RPM", turret.autoRPMEnabled ? "ON" : "OFF");
             telemetry.addData("Auto Angle", turret.autoAngleEnabled ? "ON" : "OFF");
             telemetry.addData("Tag Found", turret.isTagFound() ? "YES" : "NO");
+            telemetry.addData("April Tag angle Ty",turret.ATAngle );
             telemetry.addData("Distance", "%.1f in", turret.getDistanceToTarget());
             telemetry.addData("Tracking Error", "%.1f°", turret.getTrackingError());
             telemetry.addData("Turret Yaw Power", "%.3f", turret.turretMotor.getPower());

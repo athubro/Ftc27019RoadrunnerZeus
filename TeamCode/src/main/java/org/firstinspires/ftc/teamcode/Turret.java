@@ -15,6 +15,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
+import java.lang.annotation.Target;
+
 /**
  * Turret subsystem - with moveable turret base for aiming
  */
@@ -74,7 +76,7 @@ public final class Turret {
     public double ATAngle = 0;
     public boolean tagFound = false;
     //change with alliance and april tag
-    public double LLFarZoneOffset = 3;
+    public double LLFarZoneOffset = 2;
 
     // ==================== TIMERS ====================
     public final ElapsedTime timer = new ElapsedTime();
@@ -122,7 +124,7 @@ public final class Turret {
         leftFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         double batteryVoltage = hardwareMap.voltageSensor.iterator().next().getVoltage();
-        PARAMS.kF = -1 * batteryVoltage + 23.7;
+        PARAMS.kF = -2.21 * batteryVoltage + 42.9;
         leftFlywheel.setVelocityPIDFCoefficients(PARAMS.kP, PARAMS.kI, PARAMS.kD, PARAMS.kF);
         rightFlywheel.setVelocityPIDFCoefficients(PARAMS.kP, PARAMS.kI, PARAMS.kD, PARAMS.kF);
         turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -139,9 +141,18 @@ public final class Turret {
         limelight.setPollRateHz(100);
         limelight.start();
         pidTimer.reset();
+
+
     }
 
     // ==================== PUBLIC API ====================
+
+
+
+    public void setFlywheelPID() {
+        leftFlywheel.setVelocityPIDFCoefficients(PARAMS.kP, PARAMS.kI, PARAMS.kD, PARAMS.kF);
+        rightFlywheel.setVelocityPIDFCoefficients(PARAMS.kP, PARAMS.kI, PARAMS.kD, PARAMS.kF);
+    }
     public void setShootingEnabled(boolean enabled) {
         this.shootingEnabled = enabled;
     }
@@ -411,8 +422,16 @@ public final class Turret {
                 if (fid.getFiducialId() == PARAMS.TARGET_TAG_ID) {
                     tagFound = true;
                     ATAngle = fid.getTargetYDegrees();
+
                     errorAngleDeg = fid.getTargetXDegrees();
                     measureDistance();
+                    //????????================================================================================
+                    if (disToAprilTag > 100) {
+                        targetAngle = LLFarZoneOffset;
+                    } else {
+                        targetAngle = 0;
+                    }
+                    //==============================================================
                     break;
                 }
             }
@@ -474,7 +493,7 @@ public final class Turret {
     public void calcTargetRPM() {
         double x = disToAprilTag;
         if (tagFound) {
-            targetRPM = 12.6*x + 1586;
+            targetRPM = 12.6*x + 1636;///1586
             targetRPM = clamper(targetRPM, 1586, 4180);
         }
     }
@@ -486,7 +505,7 @@ public final class Turret {
             if (x < 85) {
                 shooterAngleSetting = 1.76*0.001*x-0.0829;
             } else {
-                shooterAngleSetting = 0.75;
+                shooterAngleSetting = 0.72;
             }
             turretAnglePos = clamper(shooterAngleSetting, 0.0, 1.0);
         }

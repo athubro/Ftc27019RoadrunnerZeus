@@ -13,6 +13,8 @@ public class ZeusTeleOPBlueTesting extends LinearOpMode {
     private Intake intake;
     private Pose2d initialPose = new Pose2d(0, 0, 0);
 
+    private double manualTurretAngle = 0;
+
     private double speedRatio = 0.75;
 
     private boolean usingOdomTracking = false;
@@ -90,16 +92,20 @@ public class ZeusTeleOPBlueTesting extends LinearOpMode {
                 turret.setTargetRPM(Math.max(0, turret.getTargetRPM() - 50.0));
             }
             if (gamepad1.dpadUpWasPressed()) {
-                turret.PARAMS.turretKF += 1;
+                turret.PARAMS.kP += 0.1;
+                turret.setFlywheelPID();
             }
             if (gamepad1.dpadDownWasPressed()) {
-                turret.PARAMS.turretKF -= 1;
+                turret.PARAMS.kP -= 0.1;
+                turret.setFlywheelPID();
             }
             if (gamepad1.dpadRightWasPressed()) {
-                turret.PARAMS.turretKD += 1;
+                turret.PARAMS.kF += 0.1;
+                turret.setFlywheelPID();
             }
             if (gamepad1.dpadLeftWasPressed()) {
-                turret.PARAMS.turretKD -= 1;
+                turret.PARAMS.kF -= 0.1;
+                turret.setFlywheelPID();
             }
 
             // Manual turret angle (up/down) - D-pad left/right
@@ -109,6 +115,11 @@ public class ZeusTeleOPBlueTesting extends LinearOpMode {
                 turret.setTurretAngleCommand(-1);
             } else {
                 turret.setTurretAngleCommand(0);
+            }
+
+            if (!turret.trackingMode) {
+                manualTurretAngle+= gamepad2.right_stick_x * 0.5;
+                turret.turretAnglePos(manualTurretAngle);
             }
 
             // =========================
@@ -140,6 +151,8 @@ public class ZeusTeleOPBlueTesting extends LinearOpMode {
             // =========================
             // TELEMETRY
             // =========================
+            telemetry.addData("kP", turret.PARAMS.kP);
+            telemetry.addData("kF", turret.PARAMS.kF);
 
             telemetry.addLine("=== DRIVE ===");
             telemetry.addData("Speed Mode", speedRatio == 1.0 ? "FAST" : (speedRatio == 0.3 ? "SLOW" : "NORMAL"));

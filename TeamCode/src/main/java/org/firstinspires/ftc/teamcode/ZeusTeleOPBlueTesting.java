@@ -13,7 +13,7 @@ public class ZeusTeleOPBlueTesting extends LinearOpMode {
     private Intake intake;
     private Pose2d initialPose = new Pose2d(0, 0, 0);
 
-    private double manualTurretAngle = 0;
+    private double manualTurretDegrees = 0;
 
     private double speedRatio = 0.75;
 
@@ -118,8 +118,8 @@ public class ZeusTeleOPBlueTesting extends LinearOpMode {
             }
 
             if (!turret.trackingMode) {
-                manualTurretAngle+= gamepad2.right_stick_x * 0.5;
-                turret.turretAnglePos(manualTurretAngle);
+                manualTurretDegrees+= gamepad2.right_stick_x * 0.5;
+                turret.manualTurretAngle(manualTurretDegrees);
             }
 
             // =========================

@@ -523,6 +523,17 @@ public final class Turret {
         turretAngle.setPosition(turretAnglePos);
     }
 
+
+    public void manualTurretAngle(double degrees) {
+        double desiredDeg;
+        desiredDeg = clamper(degrees, PARAMS.TURRET_MIN_DEG, PARAMS.TURRET_MAX_DEG);
+
+        // Convert to ticks and set target position
+        turretTargetPosition = (int)(desiredDeg * PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
+        turretMotor.setTargetPosition(turretTargetPosition);
+    }
+
+
     public static double normalizeAngleDegrees(double angleDeg) {
         while (angleDeg > 180) {
             angleDeg -= 360;

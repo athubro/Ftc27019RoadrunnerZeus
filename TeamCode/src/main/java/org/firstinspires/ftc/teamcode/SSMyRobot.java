@@ -669,7 +669,7 @@ public class SSMyRobot  {
         }
 
         public boolean run(@NonNull TelemetryPacket pack) {
-            turretSystem.updateTurretAngle();
+            turretSystem.manualTurretAngle(degrees);
             return false;
         }
     }

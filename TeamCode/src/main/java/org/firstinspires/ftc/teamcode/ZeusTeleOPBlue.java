@@ -14,6 +14,8 @@ public class ZeusTeleOPBlue extends LinearOpMode {
     private Turret turret;
     private Intake intake;
     private Pose2d initialPose = new Pose2d(0, 0, 0);
+    private boolean usingOdomTracking = false;
+
 
     private double speedRatio = 0.75;
 
@@ -24,6 +26,8 @@ public class ZeusTeleOPBlue extends LinearOpMode {
         myDrive= new MecanumDrive(hardwareMap, initialPose);
         turret = new Turret(hardwareMap, myDrive ,telemetry, initialPose);
         intake = new Intake(hardwareMap, telemetry);
+
+
 
         // Configure turret
         turret.PARAMS.TARGET_TAG_ID = 20;
@@ -74,23 +78,49 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             // =========================
 
             // Toggle tracking mode (A button)
+             /*
             if (gamepad2.aWasPressed()) {
                 turret.setTrackingMode(!turret.trackingMode);
                 turret.setAutoAngleEnabled(!turret.autoAngleEnabled);
                 turret.setAutoRPMEnabled(!turret.autoRPMEnabled);
 
             }
+*/
 
 
-            // Toggle auto RPM (X button)
-            if (gamepad2.xWasPressed()) {
+            // Toggle FULL AUTO MODE (Vision + RPM + Angle)
+            if (gamepad2.bWasPressed()) {
+                boolean newState = !turret.trackingMode;
+                turret.setTrackingMode(newState);
+                turret.setAutoAngleEnabled(newState);
+                turret.setAutoRPMEnabled(newState);
+            }
 
+            // Toggle Vision vs Odom tracking
+            if (gamepad2.aWasPressed()) {
+                usingOdomTracking = !usingOdomTracking;
+                turret.setUseOdometryTracking(usingOdomTracking);
             }
 
 
-            // Toggle auto angle (Y button)
-            if (gamepad2.yWasPressed()) {
 
+
+            // Storage/Sorting controls - D-pad
+            if (gamepad1.dpad_up) {
+                // Store balls for Purple-Green-Purple order
+                intake.storeBalls(new String[]{"P", "G", "P"});
+            }
+            if (gamepad1.dpad_down) {
+                // Store balls for Green-Purple-Green order
+                intake.storeBalls(new String[]{"G", "P", "G"});
+            }
+            if (gamepad1.dpad_left) {
+                // Execute next step in storage sequence
+                intake.executeNextStep();
+            }
+            if (gamepad1.dpad_right) {
+                // Reset all compartments to pass-through
+                intake.resetAll();
             }
 
 
@@ -133,7 +163,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
                 intake.setIntakePower(0);  // Stop
             }
             if (gamepad2.left_trigger > 0.1) {
-                intake.setIntakePower(gamepad1.left_trigger);  // Intake
+                intake.setIntakePower(gamepad2.left_trigger);  // Intake
                 intake.openGate();
             }
 

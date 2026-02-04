@@ -69,10 +69,12 @@ public final class Turret {
     // ==================== DISTANCE MEASUREMENT ====================
     public final double ATHeight = 29.5;
     public final double LimelightHeight = 13.5;
-    public final double LimelightAngle = 23.2;
+    public final double LimelightAngle = 13.6;
     public double disToAprilTag = 0;
     public double ATAngle = 0;
     public boolean tagFound = false;
+    //change with alliance and april tag
+    public double LLFarZoneOffset = 3;
 
     // ==================== TIMERS ====================
     public final ElapsedTime timer = new ElapsedTime();
@@ -481,7 +483,7 @@ public final class Turret {
         double x = disToAprilTag;
         if (tagFound) {
             double shooterAngleSetting;
-            if (x < 75) {
+            if (x < 85) {
                 shooterAngleSetting = 1.76*0.001*x-0.0829;
             } else {
                 shooterAngleSetting = 0.75;

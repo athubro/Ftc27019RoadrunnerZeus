@@ -81,8 +81,9 @@ public class ZeusBlueNearZoneV1 extends LinearOpMode {
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(startPose)
                         .strafeToLinearHeading(shotingPos.position,shotingPos.heading).build(),
-                        myRobot.setShooterAngle(0.5),
-                        myRobot.setTargetRPM(2600),
+                       // myRobot.setShooterAngle(0.5),
+                       // myRobot.setTargetRPM(2600),
+                        myRobot.calcRPMAndAngle(),
                         myRobot.shooterSpinUp(),
                         myRobot.waitSpinUp(),
                         myRobot.openGate(),

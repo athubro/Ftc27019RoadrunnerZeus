@@ -704,6 +704,28 @@ public class SSMyRobot  {
 
 
 
+
+
+
+    public class CalcRPMAndAngle implements Action {
+        double rpm;
+
+
+        public boolean run(@NonNull TelemetryPacket pack) {
+            turretSystem.updateVisionTracking();
+            turretSystem.calcTargetRPM();
+            turretSystem.calcTurretAngle();
+            turretSystem.updateTurretAngle();
+            return false;
+        }
+    }
+
+    public Action calcRPMAndAngle() {
+        return new CalcRPMAndAngle();
+    }
+
+
+
     public class ShooterStop implements Action {
         public boolean run(@NonNull TelemetryPacket pack) {
             turretSystem.shootingEnabled = false;

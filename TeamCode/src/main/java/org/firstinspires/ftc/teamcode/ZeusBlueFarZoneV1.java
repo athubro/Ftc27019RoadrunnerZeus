@@ -51,8 +51,8 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
         Action alternateMotifSeq3;
 
         // Initialize all systems
-        turretSystem = new Turret(hardwareMap, drive, telemetry, startPose);
         drive = new MecanumDrive(hardwareMap, startPose);
+        turretSystem = new Turret(hardwareMap, drive, telemetry, startPose);
         intake = new Intake(hardwareMap, telemetry);
         myRobot = new SSMyRobot(hardwareMap, drive, intake, turretSystem, startPose);
 

@@ -118,9 +118,19 @@ public class ZeusTeleOPBlueTesting extends LinearOpMode {
             }
 
             if (!turret.trackingMode) {
-                manualTurretDegrees+= gamepad2.right_stick_x * 0.5;
+                manualTurretDegrees+= gamepad2.right_stick_x;
+                manualTurretDegrees = turret.clamper(manualTurretDegrees, turret.PARAMS.TURRET_MIN_DEG, turret.PARAMS.TURRET_MAX_DEG);
                 turret.manualTurretAngle(manualTurretDegrees);
+            } else {
+                if (turret.tagFound&&!usingOdomTracking) {
+                    turret.shootingEnabled = true;
+                }
             }
+
+
+         //   if ((turret.errorAngleDeg-turret.targetAngle) < turret.targetAngle + 3  && (turret.errorAngleDeg-turret.targetAngle) > turret.targetAngle - 3) {
+         //       turret.shootingEnabled = true;
+         //   }
 
             // =========================
             // GAMEPAD 2: INTAKE CONTROLS

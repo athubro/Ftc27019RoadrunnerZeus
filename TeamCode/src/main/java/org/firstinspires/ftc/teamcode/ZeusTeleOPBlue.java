@@ -16,6 +16,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
     private Pose2d initialPose = new Pose2d(0, 0, 0);
     private boolean usingOdomTracking = false;
 
+    private double manualTurretDegrees = 0;
 
     private double speedRatio = 0.75;
 
@@ -141,12 +142,23 @@ public class ZeusTeleOPBlue extends LinearOpMode {
 
 
             // Manual turret angle control (D-pad left/right)
-            if (gamepad2.dpadRightWasPressed()) {
-                turret.setTurretAngleCommand(1);
-            } else if (gamepad2.dpadLeftWasPressed()) {
-                turret.setTurretAngleCommand(-1);
+            //if (gamepad2.dpadRightWasPressed()) {
+           //     turret.setTurretAngleCommand(1);
+            //} else if (gamepad2.dpadLeftWasPressed()) {
+            //    turret.setTurretAngleCommand(-1);
+            //} else {
+            //    turret.setTurretAngleCommand(0);
+           // }
+
+
+            if (!turret.trackingMode) {
+                manualTurretDegrees+= gamepad2.right_stick_x;
+                manualTurretDegrees = turret.clamper(manualTurretDegrees, turret.PARAMS.TURRET_MIN_DEG, turret.PARAMS.TURRET_MAX_DEG);
+                turret.manualTurretAngle(manualTurretDegrees);
             } else {
-                turret.setTurretAngleCommand(0);
+                if (turret.tagFound&&!usingOdomTracking) {
+                    turret.shootingEnabled = true;
+                }
             }
 
             // =========================

@@ -5,22 +5,21 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 
-import java.lang.annotation.Target;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 /**
  * Turret subsystem - with moveable turret base for aiming
  */
-public final class Turret {
+public final class Turret_SimpleDriveNoODO {
 
     // ==================== PARAMETERS ====================
     public class Params {
@@ -59,6 +58,9 @@ public final class Turret {
     public Params PARAMS = new Params();
 
     // ==================== HARDWARE ====================
+
+
+
     public final DcMotorEx leftFlywheel;
     public final DcMotorEx rightFlywheel;
     public final Servo turretAngle;
@@ -66,7 +68,7 @@ public final class Turret {
     public final Limelight3A limelight;
     public final FtcDashboard dashboard;
     public final Telemetry telemetry;
-    public  MecanumDrive drive;
+    //public  MecanumDrive drive;
 
     // ==================== DISTANCE MEASUREMENT ====================
     public final double ATHeight = 29.5;
@@ -109,9 +111,9 @@ public final class Turret {
     public String[] motiff = {"N", "N", "N"};
 
     // ==================== CONSTRUCTOR ====================
-    public Turret(HardwareMap hardwareMap, MecanumDrive myDrive, Telemetry telemetry, Pose2d initialPose) {
+    public Turret_SimpleDriveNoODO(HardwareMap hardwareMap,  Telemetry telemetry, Pose2d initialPose) {
         this.telemetry = telemetry;
-        this.drive =myDrive;
+       // this.drive =myDrive;
         leftFlywheel = hardwareMap.get(DcMotorEx.class, "leftFlywheel");
         rightFlywheel = hardwareMap.get(DcMotorEx.class, "rightFlywheel");
         turretAngle = hardwareMap.get(Servo.class, "shooterAngle");
@@ -238,27 +240,27 @@ public final class Turret {
         /* no-op */
     }
 
-    public MecanumDrive getDrive() {
-        return drive;
-    }
+   // public MecanumDrive getDrive() {
+   //     return drive;
+   // }
 
-    public void setDrivePowers(PoseVelocity2d powers) {
-        drive.setDrivePowers(powers);
-    }
+   // public void setDrivePowers(PoseVelocity2d powers) {
+   //     drive.setDrivePowers(powers);
+   // }
 
-    public PoseVelocity2d updatePoseEstimate() {
-        return drive.updatePoseEstimate();
-    }
+    //public PoseVelocity2d updatePoseEstimate() {
+   //     return drive.updatePoseEstimate();
+   // }
 
-    public Pose2d getPose() {
-        drive.updatePoseEstimate();
-        return drive.localizer.getPose();
-    }
+  //  public Pose2d getPose() {
+   //     drive.updatePoseEstimate();
+   //     return drive.localizer.getPose();
+   // }
 
-    public void setPose(Pose2d pose) {
-        drive.localizer.setPose(pose);
-    }
-
+   // public void setPose(Pose2d pose) {
+    //    drive.localizer.setPose(pose);
+   // }
+//
     public void setUseOdometryTracking(boolean enabled) {
         this.useOdometryTracking = enabled;
     }
@@ -313,7 +315,7 @@ public final class Turret {
     // ==================== MAIN UPDATE ====================
     public void update() {
         if (useOdometryTracking) {
-            updateOdomTracking();
+         //   updateOdomTracking();
         } else {
             updateVisionTracking();
         }
@@ -326,13 +328,13 @@ public final class Turret {
         }
         updateTurretAngle();
         pidUpdate();
-        drive.updatePoseEstimate();
+  //      drive.updatePoseEstimate();
         sendTelemetry();
     }
 
     public void update(double forwardInput, double strafeInput, double rotationInput) {
         if (useOdometryTracking) {
-            updateOdomTracking();
+         //   updateOdomTracking();
         } else {
             updateVisionTracking();
         }
@@ -349,7 +351,7 @@ public final class Turret {
         }
         updateTurretAngle();
         pidUpdate();
-        drive.updatePoseEstimate();
+       // drive.updatePoseEstimate();
         sendTelemetry();
     }
 
@@ -437,10 +439,10 @@ public final class Turret {
             }
         }
     }
-
+/*
     public void updateOdomTracking() {
-        drive.updatePoseEstimate();
-        Pose2d pose = drive.localizer.getPose();
+       // drive.updatePoseEstimate();
+       // Pose2d pose = drive.localizer.getPose();
         Vector2d robotPos = pose.position;
         double robotHeading = pose.heading.toDouble();
         Vector2d toTarget = targetPos.minus(robotPos);
@@ -453,7 +455,7 @@ public final class Turret {
         tagFound = true;
         ATAngle = 0.0;
     }
-
+*/
     public void updateTurretAiming() {
         if (!tagFound) {
             turretMotor.setTargetPosition(turretMotor.getCurrentPosition());

@@ -1,18 +1,17 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 @TeleOp(name = "ZeusTeleOPBlue v1", group = "TeleOp")
-public class ZeusTeleOPBlue extends LinearOpMode {
-    public  MecanumDrive myDrive;
-    private Turret turret;
+public class ZeusTeleOPBlueSimpleDrive extends LinearOpMode {
+   // public  MecanumDrive myDrive;
+    private Turret_SimpleDriveNoODO turret;
     private Intake intake;
     private Pose2d initialPose = new Pose2d(0, 0, 0);
     private boolean usingOdomTracking = false;
@@ -20,20 +19,32 @@ public class ZeusTeleOPBlue extends LinearOpMode {
 
     public String[] motiff = {"P", "P", "G"};
 
-
+    private DcMotorEx backLeft;
+    private DcMotorEx backRight;
+    private DcMotorEx frontLeft;
+    private DcMotorEx frontRight;
     private double manualTurretDegrees = 0;
-
+    private double DrivingSensitivityPower = 0.6;
     private double speedRatio = 0.75;
 
     @Override
     public void runOpMode() {
 
         // Initialize all systems
-        myDrive= new MecanumDrive(hardwareMap, initialPose);
-        turret = new Turret(hardwareMap, myDrive ,telemetry, initialPose);
+        //myDrive= new MecanumDrive(hardwareMap, initialPose);
+        turret = new Turret_SimpleDriveNoODO(hardwareMap,telemetry, initialPose);
         intake = new Intake(hardwareMap, telemetry);
 
-
+        backLeft = hardwareMap.get(DcMotorEx.class, "backLeft");
+        backRight = hardwareMap.get(DcMotorEx.class, "backRight");
+        frontLeft = hardwareMap.get(DcMotorEx.class, "frontLeft");
+        frontRight = hardwareMap.get(DcMotorEx.class, "frontRight");
+        backLeft.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        backRight.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        frontLeft.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        frontRight.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        backRight.setDirection(DcMotorEx.Direction.REVERSE);
+        frontRight.setDirection(DcMotorEx.Direction.REVERSE);
 
         // Configure turret
         turret.PARAMS.TARGET_TAG_ID = 20;
@@ -212,36 +223,36 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             // =========================
                     //==========================================================================================
             if ((!gamepad1.aWasPressed()) ) {
-                if (!autoDrive) {
-                    Vector2d translation = new Vector2d((speedRatio * (-gamepad1.left_stick_y)), (speedRatio * (-gamepad1.left_stick_x)));
-                    double rotation = -speedRatio * gamepad1.right_stick_x;
-                    myDrive.setDrivePowers(new PoseVelocity2d(translation, rotation));
-                } else {
-                    if (Math.abs(gamepad1.left_stick_y) > 0.01 || Math.abs(gamepad1.left_stick_x) > 0.01 || Math.abs(gamepad1.right_stick_x) > 0.01) {
-                        autoDrive =false;
-                    }
-                }
+           //     if (!autoDrive) {
+             //       Vector2d translation = new Vector2d((speedRatio * (-gamepad1.left_stick_y)), (speedRatio * (-gamepad1.left_stick_x)));
+            //        double rotation = -speedRatio * gamepad1.right_stick_x;
+            //        myDrive.setDrivePowers(new PoseVelocity2d(translation, rotation));
+            //    } else {
+            //        if (Math.abs(gamepad1.left_stick_y) > 0.01 || Math.abs(gamepad1.left_stick_x) > 0.01 || Math.abs(gamepad1.right_stick_x) > 0.01) {
+            //            autoDrive =false;
+             //       }
+           //     }
             } else {
                 //hmmmmmm
                 //Pose2d curPose2D = drive.localizer.getPose();
-                autoDrive = true;
+            //    autoDrive = true;
 
                 //   Actions.runBlocking(drive.actionBuilder(drive.localizer.getPose())
                 //           .strafeToLinearHeading(new Vector2d(38, -33), 0).build());//38,-33
                 // } else if (gamepad2.dpadLeftWasPressed()) {
-                Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose())
-                        .strafeToLinearHeading(targetPose.position, targetPose.heading).build());
+           //     Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose())
+            //            .strafeToLinearHeading(targetPose.position, targetPose.heading).build());
                 // }
             }
             if (gamepad1.xWasPressed())  {
-                autoDrive = false;
+             //   autoDrive = false;
             }
-            myDrive.updatePoseEstimate();
+           // myDrive.updatePoseEstimate();
             if (gamepad1.startWasPressed()) {
-                targetPose = myDrive.localizer.getPose();
+            //    targetPose = myDrive.localizer.getPose();
             }
             if (gamepad1.bWasPressed()) {
-                targetPose = new Pose2d(40, 32, 0 );
+           //     targetPose = new Pose2d(40, 32, 0 );
             }
 
             //==========================================================================================
@@ -273,10 +284,10 @@ public class ZeusTeleOPBlue extends LinearOpMode {
 
             telemetry.addLine("=== DRIVE ===");
             telemetry.addData("Speed Mode", speedRatio == 1.0 ? "FAST" : (speedRatio == 0.3 ? "SLOW" : "NORMAL"));
-            telemetry.addData("Position", "X: %.1f  Y: %.1f  H: %.1f°",
-                    turret.getPose().position.x,
-                    turret.getPose().position.y,
-                    Math.toDegrees(turret.getPose().heading.toDouble()));
+          // telemetry.addData("Position", "X: %.1f  Y: %.1f  H: %.1f°",
+             //       turret.getPose().position.x,
+            //        turret.getPose().position.y,
+             //       Math.toDegrees(turret.getPose().heading.toDouble()));
 
             telemetry.addLine();
             telemetry.addLine("=== TURRET ===");
@@ -321,4 +332,21 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             telemetry.update();
         }
     }
+
+
+    private void drive() {
+        double input = Math.abs(gamepad1.left_stick_y) + Math.abs(gamepad1.left_stick_x) + Math.abs(gamepad1.right_stick_x);
+        if (input > 0.1) {
+            backLeft.setPower(DrivingSensitivityPower * ((gamepad1.left_stick_y + gamepad1.left_stick_x) - gamepad1.right_stick_x));
+            backRight.setPower(DrivingSensitivityPower * ((gamepad1.left_stick_y - gamepad1.left_stick_x) + gamepad1.right_stick_x));
+            frontLeft.setPower(DrivingSensitivityPower * ((gamepad1.left_stick_y - gamepad1.left_stick_x) - gamepad1.right_stick_x));
+            frontRight.setPower(DrivingSensitivityPower * (gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x));
+        } else {
+            backLeft.setPower(0);
+            backRight.setPower(0);
+            frontLeft.setPower(0);
+            frontRight.setPower(0);
+        }
+    }
 }
+

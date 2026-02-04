@@ -5,36 +5,35 @@ import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.TranslationalVelConstraint;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-@Autonomous(name = "ZeusBlueNearZoneV1", group = "Autonomous")
-public class ZeusBlueNearZoneV1 extends LinearOpMode {
+@Autonomous(name = "ZeusBlueFarZoneV1", group = "Autonomous")
+public class ZeusBlueFarZoneV1 extends LinearOpMode {
 
     private Turret turretSystem;
     private MecanumDrive drive;
     private Intake intake;
-    private Pose2d startPose = new Pose2d(-45.2766, -61.5312, Math.toRadians(-127.6875));
-    private Pose2d shotingPos = new Pose2d(-9.923, -25.695, Math.toRadians(-115.56));//(-32.66, -24.08, Math.toRadians(45));
-    private Pose2d firstSpikeStart = new Pose2d(-9.746, -34.06, Math.toRadians(-84.316));
-    private Pose2d firstSpikeEnd = new Pose2d(-8.5665, -54.037, Math.toRadians(-91.45));
+    private Pose2d startPose = new Pose2d(61.743, -30.1168, Math.toRadians(-179.8));
+    private Pose2d lastSpikeStart = new Pose2d(41.3775, -37.8307, Math.toRadians(-99.955));//(-32.66, -24.08, Math.toRadians(45));
+    private Pose2d lastSpikeEnd = new Pose2d(40.012, -56.67, Math.toRadians(-90.128));
+    private Pose2d lastSpikeFurther = new Pose2d(39.766, -66.571, Math.toRadians(-90.5));
 
-    private Pose2d firstSpikeFurther = new Pose2d(-8.8385, -60.4869, Math.toRadians(-91.697));
-    private Pose2d secondSpikeStart = new Pose2d(14.44, -35.727, Math.toRadians(-81.94));
-    private Pose2d secondSpikeEnd = new Pose2d(16.352, -59.976, Math.toRadians(-84.186));
-    private Pose2d secondSpikeFurther = new Pose2d(17.835, -68.849, Math.toRadians(-91.67));
-    private Pose2d gatePrepare = new Pose2d(20.0447, -61.996, Math.toRadians(-113.167));
+    private Pose2d shotingPos = new Pose2d(59.1073, -22.21, Math.toRadians(-107.479));
+    private Pose2d cornerStart = new Pose2d(67.257, -60.174, Math.toRadians(-84.43));
+    private Pose2d cornerEnd = new Pose2d(67.544, -67.495, Math.toRadians(-94.685));
+    private Pose2d cornerSlideBack = new Pose2d(62.371, -62.0515, Math.toRadians(-91.017));
+    private Pose2d cornerSlideFront = new Pose2d(60.216, -67.157, Math.toRadians(-89.701));
     //with intake
-    private Pose2d gateOpen = new Pose2d(15.7857, -70.0368, Math.toRadians(-121.8748));
+    private Pose2d scoopPrepare = new Pose2d(64.697, -45.2048, Math.toRadians(-82.46));
 
-    private Pose2d thirdSpikeStart = new Pose2d(37.5592, -34.6989, Math.toRadians(-79.336));
+    private Pose2d scoopFront = new Pose2d(65.916, -65.511, Math.toRadians(-91.316));
 
-    private Pose2d thirdSpikeEnd = new Pose2d(39.354, -58.91, Math.toRadians(-90.622));
+    private Pose2d sideScoopPrepare = new Pose2d(52.8477, -47.0567, Math.toRadians(-95.688));
 
-    private Pose2d thirdSpikeFurther = new Pose2d(39.148, -66.8586, Math.toRadians(-91.583));
-    private Pose2d park = new Pose2d(0.366, -48.9, Math.toRadians(-0.305));
+    private Pose2d sideScoopFront = new Pose2d(47.781, -65.438, Math.toRadians(-102.629));
+    private Pose2d park = new Pose2d(53.697, -33.378, Math.toRadians(-106.992));
 
 
 
@@ -57,8 +56,8 @@ public class ZeusBlueNearZoneV1 extends LinearOpMode {
         intake = new Intake(hardwareMap, telemetry);
         myRobot = new SSMyRobot(hardwareMap, drive, intake, turretSystem, startPose);
 
-        Actions.runBlocking (myRobot.setTurretAnlge(-20));
-        turretSystem.targetRPM=2350;
+        Actions.runBlocking (myRobot.setTurretAnlge(20));
+        turretSystem.targetRPM=2400;
 
 
 
@@ -79,8 +78,7 @@ public class ZeusBlueNearZoneV1 extends LinearOpMode {
         //drive.updatePoseEstimate();
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
-                new SequentialAction( drive.actionBuilder(startPose)
-                        .strafeToLinearHeading(shotingPos.position,shotingPos.heading).build(),
+                new SequentialAction(
                         myRobot.setShooterAngle(0.5),
                         myRobot.setTargetRPM(2600),
                         myRobot.shooterSpinUp(),
@@ -97,7 +95,7 @@ public class ZeusBlueNearZoneV1 extends LinearOpMode {
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose()).
-                        strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading).strafeToLinearHeading(secondSpikeEnd.position,secondSpikeEnd.heading,new TranslationalVelConstraint(13)).build(),
+                        strafeToLinearHeading(lastSpikeStart.position,lastSpikeStart.heading).strafeToLinearHeading(lastSpikeEnd.position,lastSpikeEnd.heading,new TranslationalVelConstraint(13)).build(),
                         myRobot.intakePower(0.1),//, new TranslationalVelConstraint(10)
                         myRobot.turnOffUpdate())));
 
@@ -107,8 +105,8 @@ public class ZeusBlueNearZoneV1 extends LinearOpMode {
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
-                        .strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading)
-                        .strafeToLinearHeading(shotingPos.position,shotingPos.heading).build(),
+                        .strafeToLinearHeading(shotingPos.position,shotingPos.heading)
+                        .build(),
                         myRobot.shooterSpinUp(),
                         myRobot.waitSpinUp(),
                         myRobot.openGate(),
@@ -124,11 +122,12 @@ public class ZeusBlueNearZoneV1 extends LinearOpMode {
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
-                        .strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading)
-                        .strafeToLinearHeading(gatePrepare.position,gatePrepare.heading)
-                        .strafeToLinearHeading(gateOpen.position,gateOpen.heading, new TranslationalVelConstraint(12)).build(),
-                        myRobot.resetIntakeTimer(),
-                        myRobot.waitFullStorage(),
+                        .strafeToLinearHeading(cornerStart.position,cornerStart.heading)
+                        .strafeToLinearHeading(cornerEnd.position,cornerEnd.heading, new TranslationalVelConstraint(12))
+                        .strafeToLinearHeading(cornerSlideBack.position,cornerSlideBack.heading)
+                        .strafeToLinearHeading(cornerSlideFront.position,cornerSlideFront.heading, new TranslationalVelConstraint(12)).build(),
+                        //myRobot.resetIntakeTimer(),
+                        //myRobot.waitFullStorage(),
 
                         myRobot.turnOffUpdate())));
 
@@ -139,8 +138,8 @@ public class ZeusBlueNearZoneV1 extends LinearOpMode {
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
-                        .strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading)
                         .strafeToLinearHeading(shotingPos.position,shotingPos.heading)
+
                         .build(),
                         myRobot.shooterSpinUp(),
                         myRobot.waitSpinUp(),
@@ -157,11 +156,12 @@ public class ZeusBlueNearZoneV1 extends LinearOpMode {
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
-                        .strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading)
-                        .strafeToLinearHeading(gatePrepare.position,gatePrepare.heading)
-                        .strafeToLinearHeading(gateOpen.position,gateOpen.heading, new TranslationalVelConstraint(12)).build(),
-                        myRobot.resetIntakeTimer(),
-                        myRobot.waitFullStorage(),
+                        .strafeToLinearHeading(scoopPrepare.position,scoopPrepare.heading)
+                        .strafeToLinearHeading(scoopFront.position,scoopFront.heading, new TranslationalVelConstraint(12))
+                        .strafeToLinearHeading(sideScoopPrepare.position,sideScoopPrepare.heading)
+                        .strafeToLinearHeading(sideScoopFront.position,sideScoopFront.heading, new TranslationalVelConstraint(12)).build(),
+                        // myRobot.resetIntakeTimer(),
+                        // myRobot.waitFullStorage(),
 
                         myRobot.turnOffUpdate())));
         //========================================================================
@@ -171,7 +171,7 @@ public class ZeusBlueNearZoneV1 extends LinearOpMode {
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
-                        .strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading)
+
                         .strafeToLinearHeading(shotingPos.position,shotingPos.heading)
                         .build(),
                         myRobot.shooterSpinUp(),

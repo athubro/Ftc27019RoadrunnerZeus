@@ -22,7 +22,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
 
         // Initialize all systems
         myDrive= new MecanumDrive(hardwareMap, initialPose);
-        turret = new Turret(hardwareMap, telemetry, initialPose);
+        turret = new Turret(hardwareMap, myDrive ,telemetry, initialPose);
         intake = new Intake(hardwareMap, telemetry);
 
         // Configure turret

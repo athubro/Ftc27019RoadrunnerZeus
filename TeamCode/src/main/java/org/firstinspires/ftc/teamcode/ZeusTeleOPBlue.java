@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
@@ -8,7 +10,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 @TeleOp(name = "ZeusTeleOPBlue v1", group = "TeleOp")
 public class ZeusTeleOPBlue extends LinearOpMode {
-
+    public  MecanumDrive myDrive;
     private Turret turret;
     private Intake intake;
     private Pose2d initialPose = new Pose2d(0, 0, 0);
@@ -19,7 +21,8 @@ public class ZeusTeleOPBlue extends LinearOpMode {
     public void runOpMode() {
 
         // Initialize all systems
-        turret = new Turret(hardwareMap, telemetry, initialPose);
+        myDrive= new MecanumDrive(hardwareMap, initialPose);
+        turret = new Turret(hardwareMap, myDrive, telemetry, initialPose);
         intake = new Intake(hardwareMap, telemetry);
 
         // Configure turret

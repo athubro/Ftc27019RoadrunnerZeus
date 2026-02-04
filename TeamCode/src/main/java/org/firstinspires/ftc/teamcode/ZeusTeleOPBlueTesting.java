@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 @TeleOp(name = "ZeusTeleOPBlueTesting", group = "TeleOp")
 public class ZeusTeleOPBlueTesting extends LinearOpMode {
-
+    public  MecanumDrive myDrive;
     private Turret turret;
     private Intake intake;
     private Pose2d initialPose = new Pose2d(0, 0, 0);
@@ -19,8 +19,8 @@ public class ZeusTeleOPBlueTesting extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-
-        turret = new Turret(hardwareMap, telemetry, initialPose);
+        myDrive= new MecanumDrive(hardwareMap, initialPose);
+        turret = new Turret(hardwareMap, myDrive, telemetry, initialPose);
         intake = new Intake(hardwareMap, telemetry);
 
         turret.PARAMS.TARGET_TAG_ID = 20;

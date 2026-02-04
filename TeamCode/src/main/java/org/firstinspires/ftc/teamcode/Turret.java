@@ -64,7 +64,7 @@ public final class Turret {
     public final Limelight3A limelight;
     public final FtcDashboard dashboard;
     public final Telemetry telemetry;
-    public final MecanumDrive drive;
+    public  MecanumDrive drive;
 
     // ==================== DISTANCE MEASUREMENT ====================
     public final double ATHeight = 29.5;
@@ -105,9 +105,9 @@ public final class Turret {
     public String[] motiff = {"N", "N", "N"};
 
     // ==================== CONSTRUCTOR ====================
-    public Turret(HardwareMap hardwareMap, Telemetry telemetry, Pose2d initialPose) {
+    public Turret(HardwareMap hardwareMap, MecanumDrive myDrive, Telemetry telemetry, Pose2d initialPose) {
         this.telemetry = telemetry;
-        this.drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
+        this.drive =myDrive;
         leftFlywheel = hardwareMap.get(DcMotorEx.class, "leftFlywheel");
         rightFlywheel = hardwareMap.get(DcMotorEx.class, "rightFlywheel");
         turretAngle = hardwareMap.get(Servo.class, "shooterAngle");

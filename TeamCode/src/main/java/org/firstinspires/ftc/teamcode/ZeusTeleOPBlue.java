@@ -5,6 +5,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -15,6 +16,8 @@ public class ZeusTeleOPBlue extends LinearOpMode {
     private Intake intake;
     private Pose2d initialPose = new Pose2d(0, 0, 0);
     private boolean usingOdomTracking = false;
+    private Pose2d targetPose = new Pose2d(0, 0, 0);
+
 
     private double manualTurretDegrees = 0;
 
@@ -45,7 +48,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
         telemetry.addLine();
         telemetry.addLine("Press START to begin");
         telemetry.update();
-
+        boolean autoDrive = false;
         waitForStart();
 
         // Button state trackers for toggles
@@ -61,9 +64,9 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             // GAMEPAD 1: DRIVE CONTROLS
             // =========================
 
-            double forward = -speedRatio * gamepad1.left_stick_y;
-            double strafe = -speedRatio * gamepad1.left_stick_x;
-            double rotation = -speedRatio * gamepad1.right_stick_x;
+            //double forward = -speedRatio * gamepad1.left_stick_y;
+           /// double strafe = -speedRatio * gamepad1.left_stick_x;
+           // double rotation = -speedRatio * gamepad1.right_stick_x;
 
             // Speed control
             if (gamepad1.right_bumper) {
@@ -152,7 +155,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
 
 
             if (!turret.trackingMode) {
-                manualTurretDegrees+= gamepad2.right_stick_x;
+                manualTurretDegrees+= gamepad2.right_stick_x*2;
                 manualTurretDegrees = turret.clamper(manualTurretDegrees, turret.PARAMS.TURRET_MIN_DEG, turret.PARAMS.TURRET_MAX_DEG);
                 turret.manualTurretAngle(manualTurretDegrees);
             } else {
@@ -196,9 +199,54 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             // =========================
             // UPDATE ALL SYSTEMS
             // =========================
+                    //==========================================================================================
+            if ((!gamepad1.dpadRightWasPressed()) ) {
+                if (!autoDrive) {
+                    Vector2d translation = new Vector2d((speedRatio * (-gamepad1.left_stick_y)), (speedRatio * (-gamepad1.left_stick_x)));
+                    double rotation = -speedRatio * gamepad1.right_stick_x;
+                    myDrive.setDrivePowers(new PoseVelocity2d(translation, rotation));
+                } else {
+                    if (Math.abs(gamepad1.left_stick_y) > 0.01 || Math.abs(gamepad1.left_stick_x) > 0.01 || Math.abs(gamepad1.right_stick_x) > 0.01) {
+                        autoDrive =false;
+                    }
+                }
+            } else {
+                //hmmmmmm
+                //Pose2d curPose2D = drive.localizer.getPose();
+                autoDrive = true;
+
+                //   Actions.runBlocking(drive.actionBuilder(drive.localizer.getPose())
+                //           .strafeToLinearHeading(new Vector2d(38, -33), 0).build());//38,-33
+                // } else if (gamepad2.dpadLeftWasPressed()) {
+                Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose())
+                        .strafeToLinearHeading(targetPose.position, targetPose.heading).build());
+                // }
+            }
+            if (gamepad1.xWasPressed())  {
+                autoDrive = false;
+            }
+            myDrive.updatePoseEstimate();
+            if (gamepad1.startWasPressed()) {
+                targetPose = myDrive.localizer.getPose();
+            }
+            if (gamepad1.backWasPressed()) {
+                targetPose = new Pose2d(40, 32, 0 );
+            }
+
+            //==========================================================================================
 
             // Update turret with drive controls
+            /*
             turret.update(forward, strafe, rotation);
+            if (gamepad1.dpadLeftWasPressed()) {
+                Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose())
+                        .strafeToLinearHeading(targetPose.position, targetPose.heading).build());
+            }
+            drive.updatePoseEstimate();
+            if (gamepad2.startWasPressed()) {
+                closeShotPose = drive.localizer.getPose();
+            }
+             */
 
             // =========================
             // TELEMETRY

@@ -17,7 +17,7 @@ public class ZeusBlueNearZoneV1 extends LinearOpMode {
     private MecanumDrive drive;
     private Intake intake;
     private Pose2d startPose = new Pose2d(-45.2766, -61.5312, Math.toRadians(-127.6875));
-    private Pose2d shotingPos = new Pose2d(-8.923, -24.695, Math.toRadians(-115.56));//(-32.66, -24.08, Math.toRadians(45));
+    private Pose2d shotingPos = new Pose2d(-9.923, -25.695, Math.toRadians(-115.56));//(-32.66, -24.08, Math.toRadians(45));
     private Pose2d firstSpikeStart = new Pose2d(-9.746, -34.06, Math.toRadians(-84.316));
     private Pose2d firstSpikeEnd = new Pose2d(-8.5665, -54.037, Math.toRadians(-91.45));
 
@@ -27,7 +27,7 @@ public class ZeusBlueNearZoneV1 extends LinearOpMode {
     private Pose2d secondSpikeFurther = new Pose2d(17.835, -68.849, Math.toRadians(-91.67));
     private Pose2d gatePrepare = new Pose2d(20.0447, -61.996, Math.toRadians(-113.167));
     //with intake
-    private Pose2d gateOpen = new Pose2d(16.7857, -70.0368, Math.toRadians(-121.8748));
+    private Pose2d gateOpen = new Pose2d(15.7857, -70.0368, Math.toRadians(-121.8748));
 
     private Pose2d thirdSpikeStart = new Pose2d(37.5592, -34.6989, Math.toRadians(-79.336));
 
@@ -87,6 +87,7 @@ public class ZeusBlueNearZoneV1 extends LinearOpMode {
                         myRobot.waitSpinUp(),
                         myRobot.openGate(),
                         myRobot.intakePower(1),
+                        myRobot.resetIntakeTimer(),
                         myRobot.waitEmptyStorage(),
                         myRobot.closeGate(),
                         myRobot.turnOffUpdate())));
@@ -106,15 +107,83 @@ public class ZeusBlueNearZoneV1 extends LinearOpMode {
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
+                        .strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading)
                         .strafeToLinearHeading(shotingPos.position,shotingPos.heading).build(),
                         myRobot.shooterSpinUp(),
                         myRobot.waitSpinUp(),
                         myRobot.openGate(),
                         myRobot.intakePower(1),
+                        myRobot.resetIntakeTimer(),
                         myRobot.waitEmptyStorage(),
                         myRobot.closeGate(),
                         myRobot.shooterStop(),//, new TranslationalVelConstraint(10)
                         myRobot.turnOffUpdate())));
+
+        drive.updatePoseEstimate();
+
+        Actions.runBlocking(myRobot.turnOnUpdate());
+        Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
+                new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
+                        .strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading)
+                        .strafeToLinearHeading(gatePrepare.position,gatePrepare.heading)
+                        .strafeToLinearHeading(gateOpen.position,gateOpen.heading, new TranslationalVelConstraint(12)).build(),
+                        myRobot.resetIntakeTimer(),
+                        myRobot.waitFullStorage(),
+
+                        myRobot.turnOffUpdate())));
+
+        //========================================================================
+
+        drive.updatePoseEstimate();
+
+        Actions.runBlocking(myRobot.turnOnUpdate());
+        Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
+                new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
+                        .strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading)
+                        .strafeToLinearHeading(shotingPos.position,shotingPos.heading)
+                        .build(),
+                        myRobot.shooterSpinUp(),
+                        myRobot.waitSpinUp(),
+                        myRobot.openGate(),
+                        myRobot.intakePower(1),
+                        myRobot.resetIntakeTimer(),
+                        myRobot.waitEmptyStorage(),
+                        myRobot.closeGate(),
+                        myRobot.shooterStop(),
+                        myRobot.turnOffUpdate())));
+
+        drive.updatePoseEstimate();
+
+        Actions.runBlocking(myRobot.turnOnUpdate());
+        Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
+                new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
+                        .strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading)
+                        .strafeToLinearHeading(gatePrepare.position,gatePrepare.heading)
+                        .strafeToLinearHeading(gateOpen.position,gateOpen.heading, new TranslationalVelConstraint(12)).build(),
+                        myRobot.resetIntakeTimer(),
+                        myRobot.waitFullStorage(),
+
+                        myRobot.turnOffUpdate())));
+        //========================================================================
+
+        drive.updatePoseEstimate();
+
+        Actions.runBlocking(myRobot.turnOnUpdate());
+        Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
+                new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
+                        .strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading)
+                        .strafeToLinearHeading(shotingPos.position,shotingPos.heading)
+                        .build(),
+                        myRobot.shooterSpinUp(),
+                        myRobot.waitSpinUp(),
+                        myRobot.openGate(),
+                        myRobot.intakePower(1),
+                        myRobot.resetIntakeTimer(),
+                        myRobot.waitEmptyStorage(),
+                        myRobot.closeGate(),
+                        myRobot.shooterStop(),
+                        myRobot.turnOffUpdate())));
+/*
 /*
 
         drive.updatePoseEstimate();

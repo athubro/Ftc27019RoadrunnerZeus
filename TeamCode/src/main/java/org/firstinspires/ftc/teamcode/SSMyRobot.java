@@ -30,7 +30,7 @@ public class SSMyRobot  {
 
     public boolean doneShooting = true;
     public ElapsedTime generalTimer = new ElapsedTime();
-    public ElapsedTime transferTime = new ElapsedTime();
+    public ElapsedTime intakeTime = new ElapsedTime();
     private HardwareMap myHardwareMap;
     public boolean updateFlag = false;
     private double previousTime =0;
@@ -45,6 +45,7 @@ public class SSMyRobot  {
         myHardwareMap=hardwareMap;
         pose=newPos;
         generalTimer.reset();
+        intakeTime.reset();
         dashboard = FtcDashboard.getInstance();
     }
 
@@ -362,7 +363,7 @@ public class SSMyRobot  {
     public class WaitEmptyStorage implements  Action{
         public boolean run(@NonNull TelemetryPacket pack){
             intake.storageUpdate();
-            if (intake.ballCount == 0) {
+            if (intake.ballCount == 0 && intakeTime.seconds() > 1.8) {
                 return false;
             } else {
                 return true;
@@ -373,6 +374,38 @@ public class SSMyRobot  {
     public Action waitEmptyStorage(){
         return new WaitEmptyStorage();
     }
+
+
+    public class ResetIntakeTimer implements  Action{
+        public boolean run(@NonNull TelemetryPacket pack){
+            intakeTime.reset();
+                return false;
+
+        }
+    }
+
+    public Action resetIntakeTimer(){
+        return new ResetIntakeTimer();
+    }
+
+
+    public class WaitFullStorage implements  Action{
+        public boolean run(@NonNull TelemetryPacket pack){
+            intake.storageUpdate();
+            if (intake.ballCount == 3 || intakeTime.seconds() > 4) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+    }
+
+    public Action waitFullStorage(){
+        return new WaitFullStorage();
+    }
+
+
+
 
     public class WaitSpinUp implements  Action{
         public boolean run(@NonNull TelemetryPacket pack){

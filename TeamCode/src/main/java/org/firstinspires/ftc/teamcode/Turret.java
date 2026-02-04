@@ -105,9 +105,9 @@ public final class Turret {
     public String[] motiff = {"N", "N", "N"};
 
     // ==================== CONSTRUCTOR ====================
-    public Turret(HardwareMap hardwareMap, MecanumDrive myDrive, Telemetry telemetry, Pose2d initialPose) {
+    public Turret(HardwareMap hardwareMap, Telemetry telemetry, Pose2d initialPose) {
         this.telemetry = telemetry;
-        this.drive =myDrive;
+        //this.drive =myDrive;
         leftFlywheel = hardwareMap.get(DcMotorEx.class, "leftFlywheel");
         rightFlywheel = hardwareMap.get(DcMotorEx.class, "rightFlywheel");
         turretAngle = hardwareMap.get(Servo.class, "shooterAngle");

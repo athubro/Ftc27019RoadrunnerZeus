@@ -8,6 +8,7 @@ import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 @Autonomous(name = "ZeusBlueFarZoneV1", group = "Autonomous")
 public class ZeusBlueFarZoneV1 extends LinearOpMode {
@@ -53,9 +54,10 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
         // Initialize all systems
         drive = new MecanumDrive(hardwareMap, startPose);
         turretSystem = new Turret(hardwareMap, drive, telemetry, startPose);
+        turretSystem.turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         intake = new Intake(hardwareMap, telemetry);
         myRobot = new SSMyRobot(hardwareMap, drive, intake, turretSystem, startPose);
-
         Actions.runBlocking (myRobot.setTurretAnlge(20));
         turretSystem.targetRPM=2400;
 
@@ -79,8 +81,7 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction(
-                        myRobot.setShooterAngle(0.5),
-                        myRobot.setTargetRPM(2600),
+                        myRobot.turnOnTracking(),
                         myRobot.shooterSpinUp(),
                         myRobot.waitSpinUp(),
                         myRobot.openGate(),
@@ -88,6 +89,7 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
                         myRobot.resetIntakeTimer(),
                         myRobot.waitEmptyStorage(),
                         myRobot.closeGate(),
+                        myRobot.turnOffTracking(),
                         myRobot.turnOffUpdate())));
 
         drive.updatePoseEstimate();
@@ -95,7 +97,7 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose()).
-                        strafeToLinearHeading(lastSpikeStart.position,lastSpikeStart.heading).strafeToLinearHeading(lastSpikeEnd.position,lastSpikeEnd.heading,new TranslationalVelConstraint(13)).build(),
+                        strafeToLinearHeading(lastSpikeStart.position,lastSpikeStart.heading).strafeToLinearHeading(lastSpikeEnd.position,lastSpikeEnd.heading,new TranslationalVelConstraint(30)).build(),
                         myRobot.intakePower(0.1),//, new TranslationalVelConstraint(10)
                         myRobot.turnOffUpdate())));
 
@@ -107,6 +109,8 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
                         .strafeToLinearHeading(shotingPos.position,shotingPos.heading)
                         .build(),
+                        myRobot.turnOnTracking(),
+
                         myRobot.shooterSpinUp(),
                         myRobot.waitSpinUp(),
                         myRobot.openGate(),
@@ -115,6 +119,8 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
                         myRobot.waitEmptyStorage(),
                         myRobot.closeGate(),
                         myRobot.shooterStop(),//, new TranslationalVelConstraint(10)
+                        myRobot.turnOffTracking(),
+
                         myRobot.turnOffUpdate())));
 
         drive.updatePoseEstimate();
@@ -141,6 +147,9 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
                         .strafeToLinearHeading(shotingPos.position,shotingPos.heading)
 
                         .build(),
+                        myRobot.turnOnTracking(),
+
+
                         myRobot.shooterSpinUp(),
                         myRobot.waitSpinUp(),
                         myRobot.openGate(),
@@ -149,6 +158,8 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
                         myRobot.waitEmptyStorage(),
                         myRobot.closeGate(),
                         myRobot.shooterStop(),
+                        myRobot.turnOffTracking(),
+
                         myRobot.turnOffUpdate())));
 
         drive.updatePoseEstimate();
@@ -174,6 +185,8 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
 
                         .strafeToLinearHeading(shotingPos.position,shotingPos.heading)
                         .build(),
+                        myRobot.turnOnTracking(),
+
                         myRobot.shooterSpinUp(),
                         myRobot.waitSpinUp(),
                         myRobot.openGate(),
@@ -182,6 +195,8 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
                         myRobot.waitEmptyStorage(),
                         myRobot.closeGate(),
                         myRobot.shooterStop(),
+                        myRobot.turnOffTracking(),
+
                         myRobot.turnOffUpdate())));
 /*
 /*

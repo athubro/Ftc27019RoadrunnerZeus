@@ -137,7 +137,7 @@ public final class Turret {
         PARAMS.kF = -2.21 * batteryVoltage + 42.9;
         leftFlywheel.setVelocityPIDFCoefficients(PARAMS.kP, PARAMS.kI, PARAMS.kD, PARAMS.kF);
         rightFlywheel.setVelocityPIDFCoefficients(PARAMS.kP, PARAMS.kI, PARAMS.kD, PARAMS.kF);
-        turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
         turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         // Set PIDF coefficients to reduce oscillation
         turretMotor.setPositionPIDFCoefficients(PARAMS.turretKP);
@@ -541,7 +541,7 @@ public final class Turret {
             if (x<95) {
                 targetRPM = 12.6 * x + 1586 - velocityCorFactor * velocityTowardGoal;///1586
             } else {
-                targetRPM = 3170;
+                targetRPM = 3050;
             }
             targetRPM = clamper(targetRPM, 1586, 4180);
         }

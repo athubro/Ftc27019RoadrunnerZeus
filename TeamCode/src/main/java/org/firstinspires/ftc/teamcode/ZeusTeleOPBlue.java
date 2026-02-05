@@ -205,6 +205,11 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             if (gamepad1.right_trigger > 0.1) {
                 intake.setIntakePower(gamepad1.right_trigger);  // Intake
                 intake.closeGate();
+                if (intake.ballCount == 3) {
+                    rgbIndicator.setPosition(0.47);
+                } else {
+                    rgbIndicator.setPosition(0.36);
+                }
             } else if (Math.abs(gamepad1.left_trigger) > 0.1) {
                 intake.setIntakePower(-gamepad1.left_trigger);  // Manual control
             } else {

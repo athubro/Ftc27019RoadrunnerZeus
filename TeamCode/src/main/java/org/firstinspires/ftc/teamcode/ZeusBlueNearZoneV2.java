@@ -8,6 +8,7 @@ import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 @Autonomous(name = "ZeusBlueNearZoneV2", group = "Autonomous")
 public class ZeusBlueNearZoneV2 extends LinearOpMode {
@@ -54,7 +55,7 @@ public class ZeusBlueNearZoneV2 extends LinearOpMode {
         // Initialize all systems
         drive = new MecanumDrive(hardwareMap, startPose);
         turretSystem = new Turret(hardwareMap, drive, telemetry, startPose);
-
+        turretSystem.turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intake = new Intake(hardwareMap, telemetry);
         myRobot = new SSMyRobot(hardwareMap, drive, intake, turretSystem, startPose);
 

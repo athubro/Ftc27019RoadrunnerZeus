@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.acmerobotics.roadrunner.ftc.Actions;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.limelightvision.LLResult;
@@ -37,10 +38,10 @@ public final class Turret {
         public static final double TURRET_POSITION_TOLERANCE_DEG = 1.4; // Position tolerance in degrees
         // Turret motor PIDF coefficients (for built-in position controller)
         // Lower P reduces oscillation, higher D adds damping
-        public double turretKP = 3.0; // Proportional gain (default is often 10)
+        public double turretKP = 7.0; // Proportional gain (default is often 10)
         public double turretKI = 0.0; // Integral gain
-        public double turretKD = 5.0; // Derivative gain (adds damping)
-        public double turretKF = 20.0; // Feedforward gain
+        public double turretKD = 0.0; // Derivative gain (adds damping)
+        public double turretKF = 50.0; // Feedforward gain
         // Gear ratio
         public static final double SMALL_GEAR_TEETH = 39.0;
         public static final double BIG_GEAR_TEETH = 160.0;
@@ -68,6 +69,7 @@ public final class Turret {
     public final FtcDashboard dashboard;
     public final Telemetry telemetry;
     public  MecanumDrive drive;
+    public boolean adjustmentFlag;
 
     // ==================== DISTANCE MEASUREMENT ====================
     public final double ATHeight = 29.5;
@@ -95,6 +97,7 @@ public final class Turret {
     public int turretAngleCommand = 0;
     public static final double TURRET_ANGLE_STEP = 0.009;
     public boolean autoAngleEnabled = false;
+    public double errorDeg = 0;
     public double targetAngle = 0;
     public boolean adjustAiming = false;
     public boolean hasAligned = false;
@@ -268,6 +271,7 @@ public final class Turret {
 
     public void setUseOdometryTracking(boolean enabled) {
         this.useOdometryTracking = enabled;
+        adjustmentFlag = true;
     }
 
     // Methods to tune turret PIDF at runtime
@@ -325,7 +329,9 @@ public final class Turret {
             updateVisionTracking();
         }
         if (trackingMode) {
-            updateTurretAiming();
+            if (adjustmentFlag) {
+                updateTurretAiming();
+            }
         }
         if (useOdometryTracking || trackingMode) {
             if (autoRPMEnabled) calcTargetRPM();
@@ -470,15 +476,29 @@ public final class Turret {
             turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
             return;
         }
-        double errorDeg = errorAngleDeg - targetAngle;
+        errorDeg = errorAngleDeg - targetAngle;
         // Low-pass filter for smooth response
         smoothedErrorDeg = 0.75 * smoothedErrorDeg + 0.25 * errorDeg;
         // Check if aligned
         if (Math.abs(smoothedErrorDeg) < PARAMS.TURRET_POSITION_TOLERANCE_DEG) {
             hasAligned = true;
-            turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
+            //turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
             return;
         }
+
+        if (errorDeg < PARAMS.TURRET_POSITION_TOLERANCE_DEG) {
+            turretMotor.setPower(0);
+            if (adjustmentFlag) {
+                fineAdjustment();
+            }
+        }else{
+            turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
+        }
+
+
+
+
+
         hasAligned = false;
         // Calculate target position based on error
         double currentDeg = turretMotor.getCurrentPosition() / PARAMS.TICKS_PER_BIG_GEAR_DEGREE;
@@ -496,6 +516,18 @@ public final class Turret {
             disToAprilTag = (ATHeight - LimelightHeight) / Math.tan((ATAngle + LimelightAngle) * (Math.PI / 180));
         }
     }
+    public void fineAdjustment(){
+
+        updateVisionTracking();
+        adjustmentFlag = false;
+        if (Math.abs(errorDeg) > 0.5) {
+            Actions.runBlocking(
+                    drive.actionBuilder(drive.localizer.getPose())
+                            .turn(Math.toRadians(-errorDeg))
+                            .build()
+            );
+        }
+    }
 
     public void calcTargetRPM() {
         double turretAngle= turretMotor.getCurrentPosition() / PARAMS.TICKS_PER_BIG_GEAR_DEGREE;
@@ -506,7 +538,11 @@ public final class Turret {
         targetAngle=-velocityParallelGoal*angleCorrFactor;
         double x = disToAprilTag;
         if (tagFound) {
-            targetRPM = 12.6*x + 1636 - velocityCorFactor*velocityTowardGoal;///1586
+            if (x<95) {
+                targetRPM = 12.6 * x + 1586 - velocityCorFactor * velocityTowardGoal;///1586
+            } else {
+                targetRPM = 3170;
+            }
             targetRPM = clamper(targetRPM, 1586, 4180);
         }
     }
@@ -515,10 +551,10 @@ public final class Turret {
         double x = disToAprilTag;
         if (tagFound) {
             double shooterAngleSetting;
-            if (x < 85) {
+            if (x < 95) {
                 shooterAngleSetting = 1.76*0.001*x-0.0829;
             } else {
-                shooterAngleSetting = 0.72;
+                shooterAngleSetting = 0.75;
             }
             turretAnglePos = clamper(shooterAngleSetting, 0.0, 1.0);
         }

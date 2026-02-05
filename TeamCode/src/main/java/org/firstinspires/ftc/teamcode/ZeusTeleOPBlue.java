@@ -106,12 +106,18 @@ public class ZeusTeleOPBlue extends LinearOpMode {
                 turret.setTrackingMode(newState);
                 turret.setAutoAngleEnabled(newState);
                 turret.setAutoRPMEnabled(newState);
+                if (turret.trackingMode) {
+                    turret.updateTurretAiming();
+                }
             }
 
             // Toggle Vision vs Odom tracking
             if (gamepad2.aWasPressed()) {
                 usingOdomTracking = !usingOdomTracking;
                 turret.setUseOdometryTracking(usingOdomTracking);
+                if (turret.trackingMode) {
+                    turret.updateTurretAiming();
+                }
             }
 
 
@@ -323,6 +329,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             telemetry.addData("shooterAngle", "%.0f", turret.turretAnglePos);
 
             telemetry.addData("Up to Speed", turret.isUpToSpeed() ? "READY" : "SPINNING UP");
+            telemetry.addData("adjustmentFlag", turret.adjustmentFlag);
 
             telemetry.addLine();
             telemetry.addLine("=== INTAKE ===");

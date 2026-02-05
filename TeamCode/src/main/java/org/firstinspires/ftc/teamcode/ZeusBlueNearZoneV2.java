@@ -16,6 +16,7 @@ public class ZeusBlueNearZoneV2 extends LinearOpMode {
     private Turret turretSystem;
     private MecanumDrive drive;
     private Intake intake;
+    private RobotInfoStorage info;
     private Pose2d startPose = new Pose2d(-45.2766, -61.5312, Math.toRadians(-127.6875));
     private Pose2d firstShootingPos = new Pose2d(-15, -30, Math.toRadians(-115.56));
     private Pose2d shotingPos = new Pose2d(-9.923, -25.695, Math.toRadians(-115.56));//(-32.66, -24.08, Math.toRadians(45));
@@ -54,6 +55,8 @@ public class ZeusBlueNearZoneV2 extends LinearOpMode {
 
         // Initialize all systems
         drive = new MecanumDrive(hardwareMap, startPose);
+        info = new RobotInfoStorage();
+
         turretSystem = new Turret(hardwareMap, drive, telemetry, startPose);
         turretSystem.turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intake = new Intake(hardwareMap, telemetry);

@@ -13,6 +13,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name = "ZeusTeleOPBlue v1", group = "TeleOp")
 public class ZeusTeleOPBlue extends LinearOpMode {
+
+    public RobotInfoStorage info;
     public  MecanumDrive myDrive;
     private Turret turret;
     private Intake intake;
@@ -35,6 +37,8 @@ public class ZeusTeleOPBlue extends LinearOpMode {
     public void runOpMode() {
 
         // Initialize all systems
+        info = new RobotInfoStorage();
+        initialPose = info.autoEndPose;
         myDrive= new MecanumDrive(hardwareMap, initialPose);
         turret = new Turret(hardwareMap, myDrive ,telemetry, initialPose);
         intake = new Intake(hardwareMap, telemetry);

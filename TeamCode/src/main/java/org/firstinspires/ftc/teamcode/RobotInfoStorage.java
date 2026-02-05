@@ -30,7 +30,7 @@ public final class RobotInfoStorage {
 
     // ==================== HARDWARE ====================
 
-    public  MecanumDrive drive;
+    //public  MecanumDrive drive;
     public static Pose2d autoEndPose = new Pose2d(0,0,0);
 
     // ==================== DISTANCE MEASUREMENT ====================
@@ -42,9 +42,9 @@ public final class RobotInfoStorage {
     public String[] motiff = {"N", "N", "N"};
 
     // ==================== CONSTRUCTOR ====================
-    public RobotInfoStorage(MecanumDrive myDrive) {
+    public RobotInfoStorage() {
 
-        this.drive =myDrive;
+      //  this.drive =myDrive;
 
 
     }

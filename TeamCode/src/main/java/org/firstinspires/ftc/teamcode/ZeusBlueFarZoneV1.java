@@ -15,6 +15,7 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
 
     private Turret turretSystem;
     private MecanumDrive drive;
+    private RobotInfoStorage info;
     private Intake intake;
     private Pose2d startPose = new Pose2d(61.743, -30.1168, Math.toRadians(-179.8));
     private Pose2d lastSpikeStart = new Pose2d(41.3775, -37.8307, Math.toRadians(-99.955));//(-32.66, -24.08, Math.toRadians(45));
@@ -53,6 +54,8 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
 
         // Initialize all systems
         drive = new MecanumDrive(hardwareMap, startPose);
+        info = new RobotInfoStorage();
+
         turretSystem = new Turret(hardwareMap, drive, telemetry, startPose);
         turretSystem.turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
@@ -76,11 +79,12 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
         // =========================
         // PHASE 1: DRIVE TO DETECTION POSITION
         // =========================
-
+        info.autoEndPose = startPose;
         //drive.updatePoseEstimate();
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction(
+                        /*
                         myRobot.turnOnTracking(),
                         myRobot.shooterSpinUp(),
                         myRobot.waitSpinUp(),
@@ -91,8 +95,20 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
                         myRobot.closeGate(),
                         myRobot.turnOffTracking(),
                         myRobot.turnOffUpdate())));
+                        */
+                        myRobot.calcRPMAndAngle(),
+                        myRobot.shooterSpinUp(),
+                        myRobot.waitSpinUp(),
+                        myRobot.openGate(),
+                        myRobot.intakePower(1),
+                        myRobot.resetIntakeTimer(),
+                        myRobot.waitEmptyStorage(),
+                        myRobot.closeGate(),
+                        myRobot.turnOffUpdate())));
+
 
         drive.updatePoseEstimate();
+        info.autoEndPose = drive.localizer.getPose();
 
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
@@ -103,7 +119,7 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
 
 
         drive.updatePoseEstimate();
-
+        info.autoEndPose = drive.localizer.getPose();
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
@@ -124,6 +140,7 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
                         myRobot.turnOffUpdate())));
 
         drive.updatePoseEstimate();
+        info.autoEndPose = drive.localizer.getPose();
 
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
@@ -140,6 +157,7 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
         //========================================================================
 
         drive.updatePoseEstimate();
+        info.autoEndPose = drive.localizer.getPose();
 
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
@@ -163,6 +181,7 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
                         myRobot.turnOffUpdate())));
 
         drive.updatePoseEstimate();
+        info.autoEndPose = drive.localizer.getPose();
 
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
@@ -178,6 +197,7 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
         //========================================================================
 
         drive.updatePoseEstimate();
+        info.autoEndPose = drive.localizer.getPose();
 
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
@@ -235,6 +255,7 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
         }
 */
         drive.updatePoseEstimate();
+        info.autoEndPose = drive.localizer.getPose();
 
         //=========================
         // Park

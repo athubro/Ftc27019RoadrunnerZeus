@@ -62,6 +62,7 @@ public final class Turret {
     public final DcMotorEx leftFlywheel;
     public final DcMotorEx rightFlywheel;
     public final Servo turretAngle;
+    public final Servo rgbIndicator;
     public final DcMotorEx turretMotor;
     public final Limelight3A limelight;
     public final FtcDashboard dashboard;
@@ -77,6 +78,8 @@ public final class Turret {
     public boolean tagFound = false;
     //change with alliance and april tag
     public double LLFarZoneOffset = 2;
+    public double velocityCorFactor= 7;
+    public double angleCorrFactor =0.5;
 
     // ==================== TIMERS ====================
     public final ElapsedTime timer = new ElapsedTime();
@@ -117,6 +120,10 @@ public final class Turret {
         turretAngle = hardwareMap.get(Servo.class, "shooterAngle");
         turretMotor = hardwareMap.get(DcMotorEx.class, "turretMotor");
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
+
+        rgbIndicator = hardwareMap.get(Servo.class, "rgbLight");
+
+
         dashboard = FtcDashboard.getInstance();
         rightFlywheel.setDirection(DcMotor.Direction.REVERSE);
         leftFlywheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -491,9 +498,15 @@ public final class Turret {
     }
 
     public void calcTargetRPM() {
+        double turretAngle= turretMotor.getCurrentPosition() / PARAMS.TICKS_PER_BIG_GEAR_DEGREE;
+        double velocityX=drive.localizer.update().linearVel.x;
+        double velocityY=drive.localizer.update().linearVel.y;
+        double velocityTowardGoal = velocityX*Math.cos(turretAngle*Math.PI/180)+velocityY*Math.sin(turretAngle*Math.PI/180);
+        double velocityParallelGoal = velocityY*Math.cos(turretAngle*Math.PI/180)+velocityX*Math.sin(turretAngle*Math.PI/180); //moving toward left is positive
+        targetAngle=-velocityParallelGoal*angleCorrFactor;
         double x = disToAprilTag;
         if (tagFound) {
-            targetRPM = 12.6*x + 1636;///1586
+            targetRPM = 12.6*x + 1636 - velocityCorFactor*velocityTowardGoal;///1586
             targetRPM = clamper(targetRPM, 1586, 4180);
         }
     }

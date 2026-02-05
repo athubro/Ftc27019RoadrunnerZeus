@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -39,6 +40,8 @@ public final class Intake {
     //B is both storage reset, T is top one reset, M is middle reset, and N is no step
     String firstStep = "N";
     String secondStep = "N";
+
+    public static Pose2d autoPose = new Pose2d(0,0,0);
 
 
     //---------------front sensor -----------------

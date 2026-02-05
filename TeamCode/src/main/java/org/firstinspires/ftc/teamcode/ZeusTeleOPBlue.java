@@ -8,6 +8,8 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name = "ZeusTeleOPBlue v1", group = "TeleOp")
 public class ZeusTeleOPBlue extends LinearOpMode {
@@ -16,7 +18,11 @@ public class ZeusTeleOPBlue extends LinearOpMode {
     private Intake intake;
     private Pose2d initialPose = new Pose2d(0, 0, 0);
     private boolean usingOdomTracking = false;
+    private boolean ableResetTime = true;
+    private ElapsedTime sortTimer = new ElapsedTime();
     private Pose2d targetPose = new Pose2d(0, 0, 0);
+
+    private Servo rgbIndicator;
 
     public String[] motiff = {"P", "P", "G"};
 
@@ -33,7 +39,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
         turret = new Turret(hardwareMap, myDrive ,telemetry, initialPose);
         intake = new Intake(hardwareMap, telemetry);
 
-
+        rgbIndicator = hardwareMap.get(Servo.class, "rgbLight");
 
         // Configure turret
         turret.PARAMS.TARGET_TAG_ID = 20;
@@ -110,18 +116,24 @@ public class ZeusTeleOPBlue extends LinearOpMode {
 
 
 
-
+            if (turret.flywheelUpToSpeed) {
+                rgbIndicator.setPosition(0.62);
+            } else {
+                rgbIndicator.setPosition(0.333);
+            }
             // Storage/Sorting controls - D-pad
             if (gamepad1.dpad_up) {
                 motiff[0] = "G";
                 motiff[1] = "P";
                 motiff[2] = "P";
+                rgbIndicator.setPosition(0.5);
                 intake.storeBalls(motiff);
             }
             if (gamepad1.dpad_down) {
                 motiff[0] = "P";
                 motiff[1] = "P";
                 motiff[2] = "G";
+                rgbIndicator.setPosition(0.722);
                 intake.storeBalls(motiff);
             }
             if (gamepad1.dpad_left) {
@@ -129,11 +141,12 @@ public class ZeusTeleOPBlue extends LinearOpMode {
                 motiff[0] = "P";
                 motiff[1] = "G";
                 motiff[2] = "P";
+                rgbIndicator.setPosition(0.722);
                 intake.storeBalls(motiff);
             }
             if ((!intake.firstStep.equals("N")) || (!intake.secondStep.equals("N"))) {
                 // Reset all compartments to pass-through
-                if (intake.ballCount == 0 && gamepad2.left_trigger > 0.1) {
+                if (intake.ballCount == 0 && gamepad2.left_trigger > 0.1 && sortTimer.seconds() > 3) {
                     intake.executeNextStep();
                 }
             }
@@ -156,13 +169,16 @@ public class ZeusTeleOPBlue extends LinearOpMode {
 
 
             // Manual turret angle control (D-pad left/right)
-            //if (gamepad2.dpadRightWasPressed()) {
-           //     turret.setTurretAngleCommand(1);
-            //} else if (gamepad2.dpadLeftWasPressed()) {
-            //    turret.setTurretAngleCommand(-1);
-            //} else {
-            //    turret.setTurretAngleCommand(0);
-           // }
+            if (gamepad2.dpadRightWasPressed()) {
+                turret.setTurretAngleCommand(1);
+                turret.updateTurretAngle();
+            } else if (gamepad2.dpadLeftWasPressed()) {
+                turret.setTurretAngleCommand(-1);
+                turret.updateTurretAngle();
+            } else {
+                turret.setTurretAngleCommand(0);
+                turret.updateTurretAngle();
+            }
 
 
             if (!turret.trackingMode) {
@@ -190,7 +206,12 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             }
             if (gamepad2.left_trigger > 0.1) {
                 intake.setIntakePower(gamepad2.left_trigger);  // Intake
+                if (ableResetTime) {
+                    sortTimer.reset();
+                }
                 intake.openGate();
+            } else {
+                ableResetTime = true;
             }
 
             // Gate control
@@ -299,6 +320,8 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             telemetry.addData("Left RPM", "%.0f", turret.getCurrentRPMLeft());
             telemetry.addData("Right RPM", "%.0f", turret.getCurrentRPMRight());
             telemetry.addData("Target RPM", "%.0f", turret.getTargetRPM());
+            telemetry.addData("shooterAngle", "%.0f", turret.turretAnglePos);
+
             telemetry.addData("Up to Speed", turret.isUpToSpeed() ? "READY" : "SPINNING UP");
 
             telemetry.addLine();

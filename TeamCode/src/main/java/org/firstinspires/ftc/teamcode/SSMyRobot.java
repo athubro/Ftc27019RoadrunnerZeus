@@ -1,3 +1,4 @@
+
 package org.firstinspires.ftc.teamcode;
 
 import androidx.annotation.NonNull;
@@ -146,7 +147,24 @@ public class SSMyRobot  {
     }
 
 
+    public class FireBalls implements Action {
 
+        public boolean run(@NonNull TelemetryPacket pack) {
+            if (turretSystem.flywheelUpToSpeed){
+                intake.openGate();
+                intake.setIntakePower(1);
+                return false;
+            } else {
+                return true;
+            }
+
+
+        }
+    }
+
+    public Action fireBalls() {
+        return new FireBalls();
+    }
 
 
 
@@ -362,7 +380,7 @@ public class SSMyRobot  {
     public class WaitEmptyStorage implements  Action{
         public boolean run(@NonNull TelemetryPacket pack){
             intake.storageUpdate();
-            if (intake.ballCount == 0 && intakeTime.seconds() > 1.8) {
+            if (intake.ballCount == 0 && intakeTime.seconds() > 1) {
                 return false;
             } else {
                 return true;
@@ -391,7 +409,7 @@ public class SSMyRobot  {
     public class WaitFullStorage implements  Action{
         public boolean run(@NonNull TelemetryPacket pack){
             intake.storageUpdate();
-            if (intake.ballCount == 3 || intakeTime.seconds() > 4) {
+            if (intake.ballCount == 3 || intakeTime.seconds() > 2.5) {
                 return false;
             } else {
                 return true;
@@ -641,6 +659,26 @@ public class SSMyRobot  {
         return new ShooterSpinUp();
     }
 
+    public class ShooterSpinUpWAprilTag implements Action {
+        public boolean run(@NonNull TelemetryPacket pack) {
+            if (turretSystem.tagFound){
+                turretSystem.shootingEnabled = true;
+            } else {
+                turretSystem.shootingEnabled = false;
+            }
+
+            if (turretSystem.trackingMode) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+    }
+
+    public Action shooterSpinUpWAprilTag() {
+        return new ShooterSpinUpWAprilTag();
+    }
+
 
     public class SetTargetRPM implements Action {
         double rpm;
@@ -724,7 +762,27 @@ public class SSMyRobot  {
         return new CalcRPMAndAngle();
     }
 
+    public class ContCalcRPMAndAngle implements Action {
+        double rpm;
 
+
+        public boolean run(@NonNull TelemetryPacket pack) {
+            turretSystem.updateVisionTracking();
+            turretSystem.calcTargetRPM();
+            turretSystem.calcTurretAngle();
+            turretSystem.updateTurretAngle();
+            if (turretSystem.trackingMode) {
+                return false;
+            } else {
+                return true;
+            }
+
+        }
+    }
+
+    public Action contCalcRPMAndAngle() {
+        return new ContCalcRPMAndAngle();
+    }
 
     public class ShooterStop implements Action {
         public boolean run(@NonNull TelemetryPacket pack) {

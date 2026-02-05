@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-@TeleOp(name = "ZeusTeleOPBlue v1", group = "TeleOp")
+@TeleOp(name = "ZeusTeleOPBlue simple", group = "TeleOp")
 public class ZeusTeleOPBlueSimpleDrive extends LinearOpMode {
    // public  MecanumDrive myDrive;
     private Turret_SimpleDriveNoODO turret;
@@ -259,6 +259,7 @@ public class ZeusTeleOPBlueSimpleDrive extends LinearOpMode {
 
             // Update turret with drive controls
             turret.update(0, 0, 0);
+            drive();
 
             /*
             turret.update(forward, strafe, rotation);

@@ -146,7 +146,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             }
             if ((!intake.firstStep.equals("N")) || (!intake.secondStep.equals("N"))) {
                 // Reset all compartments to pass-through
-                if (intake.ballCount == 0 && gamepad2.left_trigger > 0.1 && sortTimer.seconds() > 3) {
+                if (intake.ballCount == 0 && gamepad2.left_trigger > 0.1 && sortTimer.seconds() > 1) {
                     intake.executeNextStep();
                 }
             }
@@ -182,7 +182,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
 
 
             if (!turret.trackingMode) {
-                manualTurretDegrees+= gamepad2.right_stick_x*2;
+                manualTurretDegrees+= -gamepad2.right_stick_x*2;
                 manualTurretDegrees = turret.clamper(manualTurretDegrees, turret.PARAMS.TURRET_MIN_DEG, turret.PARAMS.TURRET_MAX_DEG);
                 turret.manualTurretAngle(manualTurretDegrees);
             } else {
@@ -208,6 +208,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
                 intake.setIntakePower(gamepad2.left_trigger);  // Intake
                 if (ableResetTime) {
                     sortTimer.reset();
+                    ableResetTime = false;
                 }
                 intake.openGate();
             } else {

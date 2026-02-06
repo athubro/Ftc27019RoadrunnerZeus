@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
@@ -11,8 +9,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name = "ZeusTeleOPBlue v1", group = "TeleOp")
-public class ZeusTeleOPBlue extends LinearOpMode {
+@TeleOp(name = "ZeusTeleOPRed v1", group = "TeleOp")
+public class ZeusTeleOPRedV1 extends LinearOpMode {
 
     public RobotInfoStorage info;
     public  MecanumDrive myDrive;
@@ -46,7 +44,9 @@ public class ZeusTeleOPBlue extends LinearOpMode {
         rgbIndicator = hardwareMap.get(Servo.class, "rgbLight");
 
         // Configure turret
-        turret.PARAMS.TARGET_TAG_ID = 20;
+        turret.PARAMS.TARGET_TAG_ID = 24;
+        turret.LLFarZoneOffset = -2;
+        turret.targetPos = new Vector2d(-53, 60);
         turret.setAutoAngleEnabled(false);  // Start with manual angle control
         turret.setAutoRPMEnabled(false);    // Start with manual RPM control
         turret.setTrackingMode(false);      // Start with manual heading control

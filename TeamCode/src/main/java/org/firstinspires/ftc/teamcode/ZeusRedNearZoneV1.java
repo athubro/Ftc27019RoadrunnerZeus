@@ -5,38 +5,39 @@ import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.TranslationalVelConstraint;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-@Autonomous(name = "ZeusBlueNearZoneV2.5", group = "Autonomous")
-public class ZeusBlueNearZoneV2_5 extends LinearOpMode {
+@Autonomous(name = "ZeusRedNearZoneV1", group = "Autonomous")
+public class ZeusRedNearZoneV1 extends LinearOpMode {
 
     private Turret turretSystem;
     private MecanumDrive drive;
     private Intake intake;
     private RobotInfoStorage info;
-    private Pose2d startPose = new Pose2d(-45.2766, -61.5312, Math.toRadians(-127.6875));
-    private Pose2d firstShootingPos = new Pose2d(-15, -30, Math.toRadians(-115.56));
-    private Pose2d shotingPos = new Pose2d(-9.923, -25.695, Math.toRadians(-115.56));//(-32.66, -24.08, Math.toRadians(45));
-    private Pose2d firstSpikeStart = new Pose2d(-9.746, -34.06, Math.toRadians(-84.316));
-    private Pose2d firstSpikeEnd = new Pose2d(-8.5665, -54.037, Math.toRadians(-91.45));
+    private Pose2d startPose = new Pose2d(-54.811, 40, Math.toRadians(129.052));
+    private Pose2d firstShootingPos = new Pose2d(-22.8958, 8.795, Math.toRadians(120.458));
+    private Pose2d shotingPos = new Pose2d(-22.8958, 8.795, Math.toRadians(120.458));//(-32.66, -24.08, Math.toRadians(45)); //==========???????????????
+    private Pose2d firstSpikeStart = new Pose2d(-18.6545, 20.9864, Math.toRadians(83.1));
+    private Pose2d firstSpikeEnd = new Pose2d(-16.574, 41.1757, Math.toRadians(90.924));
 
-    private Pose2d firstSpikeFurther = new Pose2d(-8.8385, -60.4869, Math.toRadians(-91.697));
-    private Pose2d secondSpikeStart = new Pose2d(14.44, -35.727, Math.toRadians(-81.94));
-    private Pose2d secondSpikeEnd = new Pose2d(16.352, -59.976, Math.toRadians(-84.186));
-    private Pose2d secondSpikeFurther = new Pose2d(17.835, -68.849, Math.toRadians(-91.67));
-    private Pose2d gatePrepare = new Pose2d(20, -61.996, Math.toRadians(-113.167));
+    private Pose2d firstSpikeFurther = new Pose2d(-16.5344, 46.313, Math.toRadians(90.07));
+    private Pose2d secondSpikeStart = new Pose2d(3.915, 21.7272, Math.toRadians(80.22));
+    private Pose2d secondSpikeEnd = new Pose2d(6.746, 42.138, Math.toRadians(89.12));
+    private Pose2d secondSpikeFurther = new Pose2d(6.746, 51.7, Math.toRadians(90.4));
+    private Pose2d gatePrepare = new Pose2d(7.1839, 45.11, Math.toRadians(123.18));
     //with intake
-    private Pose2d gateOpen = new Pose2d(15.7, -70.0368, Math.toRadians(-121.8748));
+    private Pose2d gateOpen = new Pose2d(5.24, 48.58, Math.toRadians(119.61));
 
-    private Pose2d thirdSpikeStart = new Pose2d(37.5592, -34.6989, Math.toRadians(-79.336));
+    private Pose2d thirdSpikeStart = new Pose2d(26.58, 22.07, Math.toRadians(77.5));
 
-    private Pose2d thirdSpikeEnd = new Pose2d(39.354, -58.91, Math.toRadians(-90.622));
+    private Pose2d thirdSpikeEnd = new Pose2d(29.7, 41.75, Math.toRadians(92.6));
 
-    private Pose2d thirdSpikeFurther = new Pose2d(39.148, -66.8586, Math.toRadians(-91.583));
-    private Pose2d park = new Pose2d(0.366, -48.9, Math.toRadians(-0.305));
-    private Pose2d finalShootingPos = new Pose2d(-35.4,-19, Math.toRadians(-90));
+    private Pose2d thirdSpikeFurther = new Pose2d(29.8,50 , Math.toRadians(94.3));
+    private Pose2d park = new Pose2d(-0.3, 44.8, Math.toRadians(16));
+    private Pose2d finalShootingPos = new Pose2d(-40.8958, 8.795, Math.toRadians(110.458));
     //private Vector2d fina = new Vector2d(-35.4,-19);
     //private double secondShootingHeading = Math.toRadians(50);
 
@@ -63,8 +64,9 @@ public class ZeusBlueNearZoneV2_5 extends LinearOpMode {
         //turretSystem.turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intake = new Intake(hardwareMap, telemetry);
         myRobot = new SSMyRobot(hardwareMap, drive, intake, turretSystem, startPose);
-
-        Actions.runBlocking (myRobot.setTurretAnlge(-12));
+        turretSystem.LLFarZoneOffset = -2;
+        turretSystem.targetPos = new Vector2d(-53, 60);
+        Actions.runBlocking (myRobot.setTurretAnlge(12));
         turretSystem.targetRPM=2500;
 
 
@@ -76,7 +78,7 @@ public class ZeusBlueNearZoneV2_5 extends LinearOpMode {
         // Initial Setup
         // =========================
         turretSystem.update();
-        turretSystem.PARAMS.TARGET_TAG_ID = 20;
+        turretSystem.PARAMS.TARGET_TAG_ID = 24;
         intake.storageUpdate();
         RobotInfoStorage.autoEndPose = startPose;
 
@@ -127,7 +129,7 @@ public class ZeusBlueNearZoneV2_5 extends LinearOpMode {
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction(
                         myRobot.shooterSpinUp(),
-                        drive.actionBuilder(drive.localizer.getPose()).setReversed(true).splineToLinearHeading(shotingPos,Math.toRadians(170))
+                        drive.actionBuilder(drive.localizer.getPose()).setReversed(true).splineToLinearHeading(shotingPos,Math.toRadians(-170))
                                 .build(),
 
                         myRobot.fireBalls(),
@@ -161,7 +163,7 @@ public class ZeusBlueNearZoneV2_5 extends LinearOpMode {
                 new SequentialAction(
                         myRobot.shooterSpinUp(),
                         drive.actionBuilder(drive.localizer.getPose())
-                                .setReversed(true).splineToLinearHeading(shotingPos,Math.toRadians(170))
+                                .setReversed(true).splineToLinearHeading(shotingPos,Math.toRadians(-170))
                                 .build(),
 
                         myRobot.fireBalls(),
@@ -195,7 +197,7 @@ public class ZeusBlueNearZoneV2_5 extends LinearOpMode {
 
                         myRobot.shooterSpinUp(),
                         drive.actionBuilder(drive.localizer.getPose())
-                                .setReversed(true).splineToLinearHeading(shotingPos,Math.toRadians(170))
+                                .setReversed(true).splineToLinearHeading(shotingPos,Math.toRadians(-170))
                                 .build(),
 
                         myRobot.fireBalls(),

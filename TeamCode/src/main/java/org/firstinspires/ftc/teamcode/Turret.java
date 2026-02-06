@@ -108,7 +108,7 @@ public final class Turret {
     public double errorAngleDeg = 0.0;
     public double smoothedErrorDeg = 0.0;
     public boolean useOdometryTracking = false;
-    public final Vector2d targetPos = new Vector2d(-53, -60); // Turret target position (in ticks)
+    public  Vector2d targetPos = new Vector2d(-53, -60); // Turret target position (in ticks)
     public int turretTargetPosition = 0;
     private double previousDesiredDeg=0;
     // Motiff detection (added back from old code)

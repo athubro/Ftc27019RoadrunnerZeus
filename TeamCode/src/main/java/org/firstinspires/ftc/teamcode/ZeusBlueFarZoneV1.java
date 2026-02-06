@@ -86,6 +86,17 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction(
                         /*
+
+                        myRobot.calcRPMAndAngle(),
+                        myRobot.shooterSpinUp(),
+                        myRobot.waitSpinUp(),
+                        myRobot.openGate(),
+                        myRobot.intakePower(1),
+                        myRobot.resetIntakeTimer(),
+                        myRobot.waitEmptyStorage(),
+                        myRobot.closeGate(),
+                        myRobot.turnOffUpdate())));
+                         */
                         myRobot.turnOnTracking(),
                         myRobot.shooterSpinUp(),
                         myRobot.waitSpinUp(),
@@ -96,26 +107,19 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
                         myRobot.closeGate(),
                         myRobot.turnOffTracking(),
                         myRobot.turnOffUpdate())));
-                        */
-                        myRobot.calcRPMAndAngle(),
-                        myRobot.shooterSpinUp(),
-                        myRobot.waitSpinUp(),
-                        myRobot.openGate(),
-                        myRobot.intakePower(1),
-                        myRobot.resetIntakeTimer(),
-                        myRobot.waitEmptyStorage(),
-                        myRobot.closeGate(),
-                        myRobot.turnOffUpdate())));
+
 
 
         drive.updatePoseEstimate();
         RobotInfoStorage.autoEndPose = drive.localizer.getPose();
+
 
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose()).
                         strafeToLinearHeading(lastSpikeStart.position,lastSpikeStart.heading).strafeToLinearHeading(lastSpikeEnd.position,lastSpikeEnd.heading,new TranslationalVelConstraint(30)).build(),
                         myRobot.intakePower(0.1),//, new TranslationalVelConstraint(10)
+                        myRobot.setTurretAnlge(-40),
                         myRobot.turnOffUpdate())));
 
 

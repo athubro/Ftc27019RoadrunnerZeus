@@ -30,6 +30,7 @@ public class ZeusRedNearZoneV1 extends LinearOpMode {
     private Pose2d gatePrepare = new Pose2d(7.1839, 45.11, Math.toRadians(123.18));
     //with intake
     private Pose2d gateOpen = new Pose2d(5.24, 48.58, Math.toRadians(119.61));
+    private Pose2d gateRetrive = new Pose2d(8.24, 45.58, Math.toRadians(119.61));
 
     private Pose2d thirdSpikeStart = new Pose2d(26.58, 22.07, Math.toRadians(77.5));
 
@@ -147,7 +148,8 @@ public class ZeusRedNearZoneV1 extends LinearOpMode {
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
                         .strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading)
                         .strafeToLinearHeading(gatePrepare.position,gatePrepare.heading)
-                        .strafeToLinearHeading(gateOpen.position,gateOpen.heading, new TranslationalVelConstraint(40)).build(),
+                        .strafeToLinearHeading(gateOpen.position,gateOpen.heading, new TranslationalVelConstraint(40))
+                        .strafeToLinearHeading(gateRetrive.position,gateRetrive.heading).build(),
                         myRobot.resetIntakeTimer(),
                         myRobot.waitFullStorage(),
 
@@ -180,8 +182,8 @@ public class ZeusRedNearZoneV1 extends LinearOpMode {
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
                         .strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading)
-                        .strafeToLinearHeading(gatePrepare.position,gatePrepare.heading)
-                        .strafeToLinearHeading(gateOpen.position,gateOpen.heading, new TranslationalVelConstraint(40)).build(),
+                        .strafeToLinearHeading(gateOpen.position,gateOpen.heading, new TranslationalVelConstraint(40))
+                        .strafeToLinearHeading(gateRetrive.position,gateRetrive.heading).build(), // speed was 40 to gate open
                         myRobot.resetIntakeTimer(),
                         myRobot.waitFullStorage(),
 

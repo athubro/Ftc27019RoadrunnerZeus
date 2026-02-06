@@ -103,12 +103,12 @@ public class SSMyRobot  {
             intake.storageUpdate();
             intake.executeNextStep();
 
-            if ((!intake.firstStep.equals("N")) && (!intake.secondStep.equals("N"))) {
+            //if ((!intake.firstStep.equals("N")) && (!intake.secondStep.equals("N"))) {
 
-                return true;
-            } else {
+            //    return true;
+            //} else {
                 return false;
-            }
+            //}
         }
     }
 
@@ -116,6 +116,26 @@ public class SSMyRobot  {
         return new ExecuteNextStep();
     }
 
+
+
+    public class WaitSorting implements  Action{
+        public boolean run(@NonNull TelemetryPacket pack){
+            intake.storageUpdate();
+            if (intake.firstStep.equals("N") && intake.firstStep.equals("N")) {
+                return false;
+            }
+            //intake.ballCount == 0 ||
+            if ( intakeTime.seconds() > 1.3) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+    }
+
+    public Action waitSorting(){
+        return new WaitSorting();
+    }
 
 
     public class CloseGate implements Action {
@@ -424,6 +444,18 @@ public class SSMyRobot  {
     }
 
 
+    public class DetectMotiff implements  Action{
+        public boolean run(@NonNull TelemetryPacket pack){
+            turretSystem.updateMotiff();
+            //if (intake.ballCount == 3 || intakeTime.seconds() > 1.5) {
+                    return false;
+
+        }
+    }
+
+    public Action dectMotiff(){
+        return new DetectMotiff();
+    }
 
 
     public class WaitSpinUp implements  Action{

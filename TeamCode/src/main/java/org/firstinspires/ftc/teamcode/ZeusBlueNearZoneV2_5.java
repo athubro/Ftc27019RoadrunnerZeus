@@ -8,10 +8,9 @@ import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
 
-@Autonomous(name = "ZeusBlueNearZoneV2", group = "Autonomous")
-public class ZeusBlueNearZoneV2 extends LinearOpMode {
+@Autonomous(name = "ZeusBlueNearZoneV25", group = "Autonomous")
+public class ZeusBlueNearZoneV2_5 extends LinearOpMode {
 
     private Turret turretSystem;
     private MecanumDrive drive;
@@ -27,9 +26,9 @@ public class ZeusBlueNearZoneV2 extends LinearOpMode {
     private Pose2d secondSpikeStart = new Pose2d(14.44, -35.727, Math.toRadians(-81.94));
     private Pose2d secondSpikeEnd = new Pose2d(16.352, -59.976, Math.toRadians(-84.186));
     private Pose2d secondSpikeFurther = new Pose2d(17.835, -68.849, Math.toRadians(-91.67));
-    private Pose2d gatePrepare = new Pose2d(20.0447, -61.996, Math.toRadians(-113.167));
+    private Pose2d gatePrepare = new Pose2d(20, -61.996, Math.toRadians(-113.167));
     //with intake
-    private Pose2d gateOpen = new Pose2d(15.7857, -70.0368, Math.toRadians(-121.8748));
+    private Pose2d gateOpen = new Pose2d(15.7, -70.0368, Math.toRadians(-121.8748));
 
     private Pose2d thirdSpikeStart = new Pose2d(37.5592, -34.6989, Math.toRadians(-79.336));
 
@@ -37,7 +36,9 @@ public class ZeusBlueNearZoneV2 extends LinearOpMode {
 
     private Pose2d thirdSpikeFurther = new Pose2d(39.148, -66.8586, Math.toRadians(-91.583));
     private Pose2d park = new Pose2d(0.366, -48.9, Math.toRadians(-0.305));
-
+    private Pose2d finalShootingPos = new Pose2d(-35.4,-19, Math.toRadians(-95));
+    //private Vector2d fina = new Vector2d(-35.4,-19);
+    //private double secondShootingHeading = Math.toRadians(50);
 
 
 
@@ -126,9 +127,8 @@ public class ZeusBlueNearZoneV2 extends LinearOpMode {
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction(
                         myRobot.shooterSpinUp(),
-                        drive.actionBuilder(drive.localizer.getPose())
-                        .strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading)
-                        .strafeToLinearHeading(shotingPos.position,shotingPos.heading).build(),
+                        drive.actionBuilder(drive.localizer.getPose()).setReversed(true).splineToLinearHeading(shotingPos,Math.toRadians(170))
+                                .build(),
 
                         myRobot.fireBalls(),
                         myRobot.resetIntakeTimer(),
@@ -161,9 +161,8 @@ public class ZeusBlueNearZoneV2 extends LinearOpMode {
                 new SequentialAction(
                         myRobot.shooterSpinUp(),
                         drive.actionBuilder(drive.localizer.getPose())
-                        .strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading)
-                        .strafeToLinearHeading(shotingPos.position,shotingPos.heading)
-                        .build(),
+                                .setReversed(true).splineToLinearHeading(shotingPos,Math.toRadians(170))
+                                .build(),
 
                         myRobot.fireBalls(),
                         myRobot.resetIntakeTimer(),
@@ -196,9 +195,8 @@ public class ZeusBlueNearZoneV2 extends LinearOpMode {
 
                         myRobot.shooterSpinUp(),
                         drive.actionBuilder(drive.localizer.getPose())
-                        .strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading)
-                        .strafeToLinearHeading(shotingPos.position,shotingPos.heading)
-                        .build(),
+                                .setReversed(true).splineToLinearHeading(shotingPos,Math.toRadians(170))
+                                .build(),
 
                         myRobot.fireBalls(),
                         myRobot.resetIntakeTimer(),
@@ -229,7 +227,7 @@ public class ZeusBlueNearZoneV2 extends LinearOpMode {
                         myRobot.shooterSpinUp(),
                         drive.actionBuilder(drive.localizer.getPose())
 
-                                .strafeToLinearHeading(shotingPos.position,shotingPos.heading)
+                                .strafeToLinearHeading(finalShootingPos.position,finalShootingPos.heading)
                                 .build(),
 
                         myRobot.fireBalls(),

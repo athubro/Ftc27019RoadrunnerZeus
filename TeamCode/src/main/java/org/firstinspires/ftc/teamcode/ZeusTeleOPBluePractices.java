@@ -1,18 +1,17 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name = "ZeusTeleOPBlue v1", group = "TeleOp")
-public class ZeusTeleOPBlue extends LinearOpMode {
+@TeleOp(name = "ZeusTeleOPBlue practice (v1)", group = "TeleOp")
+public class ZeusTeleOPBluePractices extends LinearOpMode {
 
     public RobotInfoStorage info;
     public  MecanumDrive myDrive;
@@ -38,11 +37,12 @@ public class ZeusTeleOPBlue extends LinearOpMode {
 
         // Initialize all systems
         info = new RobotInfoStorage();
-        initialPose = RobotInfoStorage.autoEndPose;
+       // initialPose = info.autoEndPose;
         myDrive= new MecanumDrive(hardwareMap, initialPose);
         turret = new Turret(hardwareMap, myDrive ,telemetry, initialPose);
         intake = new Intake(hardwareMap, telemetry);
-
+       // turret.turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        turret.resetTurretEncoder();
         rgbIndicator = hardwareMap.get(Servo.class, "rgbLight");
 
         // Configure turret
@@ -104,7 +104,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             }
 */
 
-
+            // Toggle FULL AUTO MODE (Vision + RPM + Angle)
             if (gamepad2.bWasPressed()) {
                 boolean tempState = !turret.trackingMode;
                 turret.setTrackingMode(tempState);
@@ -139,8 +139,6 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             }
 
 
-
-
             if (turret.flywheelUpToSpeed) {
                 rgbIndicator.setPosition(0.62);
             } else {
@@ -169,6 +167,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
                 rgbIndicator.setPosition(0.722);
                 intake.storeBalls(motiff);
             }
+
             if (gamepad1.dpad_right) {
 
                 motiff[0] = "P";
@@ -225,6 +224,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
                     turret.setShootingEnabled(true); //= true;
                 }
             }
+
             // =========================
             // GAMEPAD 2: INTAKE CONTROLS
             // =========================

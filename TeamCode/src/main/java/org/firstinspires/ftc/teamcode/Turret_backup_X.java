@@ -20,7 +20,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 /**
  * Turret subsystem - with moveable turret base for aiming
  */
-public final class Turret {
+public final class Turret_backup_X {
 
     // ==================== PARAMETERS ====================
     public class Params {
@@ -115,7 +115,7 @@ public final class Turret {
     public String[] motiff = {"N", "N", "N"};
 
     // ==================== CONSTRUCTOR ====================
-    public Turret(HardwareMap hardwareMap, MecanumDrive myDrive, Telemetry telemetry, Pose2d initialPose) {
+    public Turret_backup_X(HardwareMap hardwareMap, MecanumDrive myDrive, Telemetry telemetry, Pose2d initialPose) {
         this.telemetry = telemetry;
         this.drive =myDrive;
         leftFlywheel = hardwareMap.get(DcMotorEx.class, "leftFlywheel");
@@ -207,7 +207,7 @@ public final class Turret {
         } else {
             adjustAiming = false;
             hasAligned = false;
-            //turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
+            turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
         }
     }
 
@@ -383,8 +383,6 @@ public final class Turret {
         sendTelemetry();
     }
 
-
-
     // ==================== public METHODS ====================
     public void pidUpdate() {
         if (pidTimer.seconds() < Params.PID_INTERVAL) return;
@@ -488,19 +486,18 @@ public final class Turret {
 
     public void updateTurretAiming() {
 
-        if (actionFlagForTurning && !useOdometryTracking) {
+        if (fineAdjustmentFlag) {
             if (timer.seconds()> fineAdjustingTimer+0.5 && timer.seconds()<fineAdjustingTimer+3 ){
                 fineAdjustingTimer=-1;
                 //fineAdjustmentFlag=false;
                 fineAdjustment();
             }
-            if (timer.seconds()>fineAdjustingTimer+4){
-                fineAdjustmentFlag=true;
-            }
 
         }
 
-
+        if (timer.seconds()>fineAdjustingTimer+4){
+            fineAdjustmentFlag=true;
+        }
         if (!tagFound) {
             //turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
             turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
@@ -529,7 +526,7 @@ public final class Turret {
             hasAligned = false;
         }
 
-        if (actionFlagForTurning && fineAdjustmentFlag && hasAligned) {
+        if (fineAdjustmentFlag && hasAligned) {
             turretMotor.setPower(0);
             fineAdjustingTimer=timer.seconds();
             return;
@@ -662,8 +659,6 @@ public final class Turret {
 
     public void resetTurretEncoder() {
         turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        turretMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
     }
     // ==================== HELPER METHODS ====================
     public static double clamper(double v, double lo, double hi) {

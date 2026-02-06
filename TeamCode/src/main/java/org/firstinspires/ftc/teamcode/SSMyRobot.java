@@ -380,7 +380,9 @@ public class SSMyRobot  {
     public class WaitEmptyStorage implements  Action{
         public boolean run(@NonNull TelemetryPacket pack){
             intake.storageUpdate();
-            if (intake.ballCount == 0 && intakeTime.seconds() > 1) {
+
+            //intake.ballCount == 0 ||
+            if ( intakeTime.seconds() > 1.3) {
                 return false;
             } else {
                 return true;
@@ -409,7 +411,7 @@ public class SSMyRobot  {
     public class WaitFullStorage implements  Action{
         public boolean run(@NonNull TelemetryPacket pack){
             intake.storageUpdate();
-            if (intake.ballCount == 3 || intakeTime.seconds() > 2.5) {
+            if (intake.ballCount == 3 || intakeTime.seconds() > 1.5) {
                 return false;
             } else {
                 return true;

@@ -62,7 +62,7 @@ public final class Intake {
     double backColorHueGreenBall = 160;
     double backColorHueUpperBound = 10;
     double backColorHueLowerBound = -10;
-    double backColorDis = 5.5;
+    double backColorDis = 4.6;//5.5
 
 
 

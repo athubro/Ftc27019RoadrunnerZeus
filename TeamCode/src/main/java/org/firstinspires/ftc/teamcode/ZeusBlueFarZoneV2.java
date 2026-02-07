@@ -8,10 +8,9 @@ import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
 
-@Autonomous(name = "ZeusBlueFarZoneV1", group = "Autonomous")
-public class ZeusBlueFarZoneV1 extends LinearOpMode {
+@Autonomous(name = "ZeusBlueFarZoneV2", group = "Autonomous")
+public class ZeusBlueFarZoneV2 extends LinearOpMode {
 
     private Turret turretSystem;
     private MecanumDrive drive;
@@ -130,22 +129,26 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
         RobotInfoStorage.autoEndPose=  drive.localizer.getPose();
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
-                new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
-                        .strafeToLinearHeading(shotingPos.position,shotingPos.heading)
-                        .build(),
-                        myRobot.turnOnTracking(),
+                new SequentialAction(myRobot.turnOnTracking(),
 
                         myRobot.shooterSpinUp(),
                         myRobot.waitSpinUp(),
                         myRobot.openGate(),
+                        drive.actionBuilder(drive.localizer.getPose())
+                        .turn(Math.toRadians(-turretSystem.errorDeg))
+                        .build(),
                         myRobot.intakePower(1),
                         myRobot.resetIntakeTimer(),
                         myRobot.waitEmptyStorage(),
                         myRobot.closeGate(),
-                        myRobot.shooterStop(),//, new TranslationalVelConstraint(10)
+                        myRobot.shooterStop(),
                         myRobot.turnOffTracking(),
+                        myRobot.turnOffUpdate()),
+                new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
+                        .strafeToLinearHeading(shotingPos.position,shotingPos.heading)
+                        .build()
 
-                        myRobot.turnOffUpdate())));
+                        )));
 
         drive.updatePoseEstimate();
         RobotInfoStorage.autoEndPose = drive.localizer.getPose();

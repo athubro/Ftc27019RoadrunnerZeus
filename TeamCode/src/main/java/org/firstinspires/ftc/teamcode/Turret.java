@@ -49,8 +49,8 @@ public final class Turret {
         public static final double BIG_GEAR_DEG_PER_SMALL_REV = 360.0 / GEAR_RATIO;
         public static final double TICKS_PER_BIG_GEAR_DEGREE = TICKS_PER_SMALL_REV / BIG_GEAR_DEG_PER_SMALL_REV;
         // Soft limits
-        public static final double TURRET_MIN_DEG = -90.0;
-        public static final double TURRET_MAX_DEG = +90.0;
+        public static final double TURRET_MIN_DEG = -85.0;
+        public static final double TURRET_MAX_DEG = +85.0;
         // Legacy
         public double posPerDegree = 1.0 / 180.0;
         public double maxServoChange = 0.05;
@@ -107,12 +107,17 @@ public final class Turret {
     public boolean continuousTracking = true;
     public double errorAngleDeg = 0.0;
     public double smoothedErrorDeg = 0.0;
+    private double tagTimer=0;
+    private double tagChangeDelay=0.5;
+
+    public double TurretDesiredDeg=0;
     public boolean useOdometryTracking = false;
     public  Vector2d targetPos = new Vector2d(-53, -60); // Turret target position (in ticks)
     public int turretTargetPosition = 0;
-    private double previousDesiredDeg=0;
+    public double previousDesiredDeg=0;
     // Motiff detection (added back from old code)
     public String[] motiff = {"N", "N", "N"};
+    public boolean teleOpOnly=true;
 
     // ==================== CONSTRUCTOR ====================
     public Turret(HardwareMap hardwareMap, MecanumDrive myDrive, Telemetry telemetry, Pose2d initialPose) {
@@ -347,6 +352,7 @@ public final class Turret {
 
 
         } else{
+            previousDesiredDeg=200;
             fineAdjustmentFlag=false;
             turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
         }
@@ -446,12 +452,16 @@ public final class Turret {
     }
 
     public void updateVisionTracking() {
-        tagFound = false;
-        errorAngleDeg = 0.0;
+        boolean postiveTag=false;
+       // boolean previousTagResult=tagFound;
+
+        //tagFound = false;
+        //errorAngleDeg = 0.0;
         LLResult result = limelight.getLatestResult();
         if (result != null && result.isValid()) {
             for (LLResultTypes.FiducialResult fid : result.getFiducialResults()) {
                 if (fid.getFiducialId() == PARAMS.TARGET_TAG_ID) {
+                    postiveTag=true;
                     tagFound = true;
                     ATAngle = fid.getTargetYDegrees();
 
@@ -467,6 +477,14 @@ public final class Turret {
                     break;
                 }
             }
+        }
+        if (!postiveTag){
+            if (timer.seconds()>tagTimer+tagChangeDelay) {
+                tagFound=false;
+                errorAngleDeg=0;
+            }
+        } else{
+            tagTimer=timer.seconds();
         }
     }
 
@@ -504,6 +522,10 @@ public final class Turret {
         if (!tagFound) {
             //turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
             turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
+            if (!useOdometryTracking){
+                previousDesiredDeg=200;
+            }
+
 
         }
         /*
@@ -512,11 +534,13 @@ public final class Turret {
             return;
         }
 
-         */
+
         if ( hasAligned) {
             //turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
             return;
         }
+
+         */
         errorDeg = errorAngleDeg - targetAngle;
         // Low-pass filter for smooth response
         smoothedErrorDeg = 0.75 * smoothedErrorDeg + 0.25 * errorDeg;
@@ -530,10 +554,12 @@ public final class Turret {
         }
 
         if (actionFlagForTurning && fineAdjustmentFlag && hasAligned) {
+            turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
             turretMotor.setPower(0);
             fineAdjustingTimer=timer.seconds();
             return;
         }else{
+            //turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
             turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
         }
 
@@ -541,7 +567,9 @@ public final class Turret {
 
 
 
-        hasAligned = false;
+        if (hasAligned) {
+            return;
+        }
         // Calculate target position based on error
         double currentDeg = turretMotor.getCurrentPosition() / PARAMS.TICKS_PER_BIG_GEAR_DEGREE;
 
@@ -551,8 +579,8 @@ public final class Turret {
         desiredDeg= normalizeAngleDegrees(desiredDeg);
         // Apply soft limits
         desiredDeg = clamper(desiredDeg, PARAMS.TURRET_MIN_DEG, PARAMS.TURRET_MAX_DEG);
-
-        if (useOdometryTracking){
+        TurretDesiredDeg=desiredDeg;
+        if (useOdometryTracking){ //useOdometryTracking
             // Convert to ticks and set target position
             if (Math.abs(desiredDeg-previousDesiredDeg)>5){
                 turretTargetPosition = (int)(desiredDeg * PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
@@ -560,9 +588,11 @@ public final class Turret {
                 previousDesiredDeg=desiredDeg;
             }
         } else{
-            turretTargetPosition = (int)(desiredDeg * PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
-            turretMotor.setTargetPosition(turretTargetPosition);
-            previousDesiredDeg=desiredDeg;
+            if (Math.abs(desiredDeg-previousDesiredDeg)>PARAMS.TURRET_POSITION_TOLERANCE_DEG) {
+                turretTargetPosition = (int) (desiredDeg * PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
+                turretMotor.setTargetPosition(turretTargetPosition);
+                previousDesiredDeg = desiredDeg;
+            }
         }
 
 
@@ -578,7 +608,9 @@ public final class Turret {
 
         updateVisionTracking();
         fineAdjustmentFlag = false;
-        if (actionFlagForTurning){
+
+        if (actionFlagForTurning&&teleOpOnly){
+            errorDeg = errorAngleDeg - targetAngle;
             if (Math.abs(errorDeg) > 0.5) {
                 Actions.runBlocking(
                         drive.actionBuilder(drive.localizer.getPose())

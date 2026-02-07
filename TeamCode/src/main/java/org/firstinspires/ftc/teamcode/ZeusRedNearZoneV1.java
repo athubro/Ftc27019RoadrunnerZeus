@@ -25,12 +25,12 @@ public class ZeusRedNearZoneV1 extends LinearOpMode {
 
     private Pose2d firstSpikeFurther = new Pose2d(-16.5344, 46.313, Math.toRadians(90.07));
     private Pose2d secondSpikeStart = new Pose2d(3.915, 21.7272, Math.toRadians(80.22));
-    private Pose2d secondSpikeEnd = new Pose2d(6.746, 42.138, Math.toRadians(89.12));
+    private Pose2d secondSpikeEnd = new Pose2d(6.746, 44.138, Math.toRadians(89.12));
     private Pose2d secondSpikeFurther = new Pose2d(6.746, 51.7, Math.toRadians(90.4));
-    private Pose2d gatePrepare = new Pose2d(7.1839, 45.11, Math.toRadians(123.18));
+    private Pose2d gatePrepare = new Pose2d(7.5839, 45.11, Math.toRadians(123.18));
     //with intake
-    private Pose2d gateOpen = new Pose2d(5.24, 48.58, Math.toRadians(119.61));
-    private Pose2d gateRetrive = new Pose2d(8.24, 45.58, Math.toRadians(119.61));
+    private Pose2d gateOpen = new Pose2d(7.64, 50, Math.toRadians(120.61));
+    private Pose2d gateRetrive = new Pose2d(10.24, 48.58, Math.toRadians(119.61));
 
     private Pose2d thirdSpikeStart = new Pose2d(26.58, 22.07, Math.toRadians(77.5));
 

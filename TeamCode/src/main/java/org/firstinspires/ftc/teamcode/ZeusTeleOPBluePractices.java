@@ -52,6 +52,7 @@ public class ZeusTeleOPBluePractices extends LinearOpMode {
         turret.setTrackingMode(false);      // Start with manual heading control
         turret.actionFlagForTurning=true;
         turret.fineAdjustmentFlag=true;
+        turret.teleOpOnly=true;
         telemetry.addLine("=== SYSTEM READY ===");
         telemetry.addLine("Turret + Drive + Intake Initialized");
         telemetry.addLine("Target Tag ID: 20");
@@ -221,6 +222,7 @@ public class ZeusTeleOPBluePractices extends LinearOpMode {
                 manualTurretDegrees=turret.turretMotor.getCurrentPosition()*1.0/turret.PARAMS.TICKS_PER_BIG_GEAR_DEGREE;
 
                 if (turret.tagFound&&!usingOdomTracking) {
+                    //temporary turn off shootngenable at hotel!
                     turret.setShootingEnabled(true); //= true;
                 }
             }
@@ -350,9 +352,15 @@ public class ZeusTeleOPBluePractices extends LinearOpMode {
             telemetry.addData("Tag Found", turret.isTagFound() ? "YES" : "NO");
             telemetry.addData("Distance", "%.1f in", turret.getDistanceToTarget());
             telemetry.addData("Tracking Error", "%.1f°", turret.getTrackingError());
+            telemetry.addData("error Deg",turret.errorDeg);
+            telemetry.addData("aligned? ",turret.hasAligned);
+            telemetry.addData("desired Deg", turret.TurretDesiredDeg);
+            telemetry.addData("previous desired deg", turret.previousDesiredDeg);
             telemetry.addData("Turret Yaw Power", "%.3f", turret.turretMotor.getPower());
             telemetry.addData("Turret Yaw Deg", "%.1f°", turret.turretMotor.getCurrentPosition() / turret.PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
-
+            telemetry.addData("actionFlagForTurning", turret.actionFlagForTurning);
+            telemetry.addData("FineAdjustmentFlag ", turret.fineAdjustmentFlag);
+            telemetry.addData("teleOpOnly", turret.teleOpOnly);
             telemetry.addLine();
             telemetry.addLine("=== SHOOTER ===");
             telemetry.addData("Shooting", turret.shootingEnabled ? "ENABLED" : "DISABLED");
@@ -363,7 +371,7 @@ public class ZeusTeleOPBluePractices extends LinearOpMode {
             telemetry.addData("shooterAngle", "%.0f", turret.turretAnglePos);
 
             telemetry.addData("Up to Speed", turret.isUpToSpeed() ? "READY" : "SPINNING UP");
-            telemetry.addData("adjustmentFlag", turret.adjustmentFlag);
+            //telemetry.addData("adjustmentFlag", turret.adjustmentFlag);
 
             telemetry.addLine();
             telemetry.addLine("=== INTAKE ===");

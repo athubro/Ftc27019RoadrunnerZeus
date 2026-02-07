@@ -19,7 +19,7 @@ public class ZeusRedFarZoneV1 extends LinearOpMode {
     private Intake intake;
     private Pose2d startPose = new Pose2d(61.51, -0.357, Math.toRadians(-179.8));
     private Pose2d lastSpikeStart = new Pose2d(33.69, 17.87, Math.toRadians(110.47));//(-32.66, -24.08, Math.toRadians(45));
-    private Pose2d lastSpikeEnd = new Pose2d(30.34, 38.62, Math.toRadians(90.9));
+    private Pose2d lastSpikeEnd = new Pose2d(30.34, 40.62, Math.toRadians(90.9));
     private Pose2d lastSpikeFurther = new Pose2d(30.7, 49.57, Math.toRadians(93.26));
 
     private Pose2d shotingPos = new Pose2d(48.66, 3.731, Math.toRadians(107.5));
@@ -60,6 +60,8 @@ public class ZeusRedFarZoneV1 extends LinearOpMode {
         turretSystem.resetTurretEncoder();
      //   turretSystem.turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         turretSystem.LLFarZoneOffset = -2;
+        turretSystem.actionFlagForTurning=true;
+        turretSystem.fineAdjustmentFlag=true;
         turretSystem.targetPos = new Vector2d(-53, 60);
         intake = new Intake(hardwareMap, telemetry);
         myRobot = new SSMyRobot(hardwareMap, drive, intake, turretSystem, startPose);
@@ -120,7 +122,7 @@ public class ZeusRedFarZoneV1 extends LinearOpMode {
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose()).
                         strafeToLinearHeading(lastSpikeStart.position,lastSpikeStart.heading).strafeToLinearHeading(lastSpikeEnd.position,lastSpikeEnd.heading,new TranslationalVelConstraint(30)).build(),
                         myRobot.intakePower(0.1),//, new TranslationalVelConstraint(10)
-                        myRobot.setTurretAnlge(40),
+                        myRobot.setTurretAnlge(38),
                         myRobot.turnOffUpdate())));
 
 
@@ -225,6 +227,19 @@ public class ZeusRedFarZoneV1 extends LinearOpMode {
                         myRobot.turnOffTracking(),
 
                         myRobot.turnOffUpdate())));
+
+        drive.updatePoseEstimate();
+        RobotInfoStorage.autoEndPose = drive.localizer.getPose();
+
+
+
+        Actions.runBlocking(myRobot.turnOnUpdate());
+        Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
+                new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
+
+                        .strafeToLinearHeading(park.position,park.heading)
+                        .build())));
+/*
 /*
 /*
 

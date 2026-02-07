@@ -52,6 +52,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
         turret.setTrackingMode(false);      // Start with manual heading control
         turret.actionFlagForTurning=true;
         turret.fineAdjustmentFlag=true;
+        turret.teleOpOnly=true;
         telemetry.addLine("=== SYSTEM READY ===");
         telemetry.addLine("Turret + Drive + Intake Initialized");
         telemetry.addLine("Target Tag ID: 20");

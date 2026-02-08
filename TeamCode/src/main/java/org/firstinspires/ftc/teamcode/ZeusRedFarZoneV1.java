@@ -22,7 +22,7 @@ public class ZeusRedFarZoneV1 extends LinearOpMode {
     private Pose2d lastSpikeEnd = new Pose2d(30.34, 40.62, Math.toRadians(90.9));
     private Pose2d lastSpikeFurther = new Pose2d(30.7, 49.57, Math.toRadians(93.26));
 
-    private Pose2d shotingPos = new Pose2d(48.66, 3.731, Math.toRadians(107.5));
+    private Pose2d shotingPos = new Pose2d(47.66, 9.731, Math.toRadians(110.5));
     private Pose2d cornerStart = new Pose2d(54.3645, 46.97, Math.toRadians(87.5));
     private Pose2d cornerEnd = new Pose2d(54.09, 52.846, Math.toRadians(80.5));
     private Pose2d cornerSlideBack = new Pose2d(46.1,42.41 , Math.toRadians(98.6));

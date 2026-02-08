@@ -171,21 +171,22 @@ public class ZeusTeleOPBlue extends LinearOpMode {
                 intake.storeBalls(motiff);
             }
             if (gamepad1.dpad_right) {
-
-                motiff[0] = "P";
-                motiff[1] = "G";
-                motiff[2] = "P";
-                //rgbIndicator.setPosition(0.722);
-                intake.resetAll();
+                if ((!intake.firstStep.equals("N")) || (!intake.secondStep.equals("N"))) {
+                    intake.executeNextStep();
+                } else {
+                    //rgbIndicator.setPosition(0.722);
+                    intake.resetAll();
+                }
             }
             if ((!intake.firstStep.equals("N")) || (!intake.secondStep.equals("N"))) {
                 // Reset all compartments to pass-through
-                if (intake.ballCount == 0 && gamepad2.left_trigger > 0.1 && sortTimer.seconds() > 0.6) {
+                if ( intake.ballCount == 0 &&gamepad2.left_trigger > 0.1 && sortTimer.seconds() > 0.6) {//
                     intake.executeNextStep();
                     sortTimer.reset();
                     //========resetted?^^^^
                 }
             }
+
 
 
             // Enable/disable shooting with triggers
@@ -278,7 +279,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             if ((!gamepad1.aWasPressed()) ) {
                 if (!autoDrive) {
                     Vector2d translation = new Vector2d((speedRatio * (-gamepad1.left_stick_y)), (speedRatio * (-gamepad1.left_stick_x)));
-                    double rotation = -speedRatio * gamepad1.right_stick_x;
+                    double rotation = -0.65 * gamepad1.right_stick_x;
                     myDrive.setDrivePowers(new PoseVelocity2d(translation, rotation));
                 } else {
                     if (Math.abs(gamepad1.left_stick_y) > 0.01 || Math.abs(gamepad1.left_stick_x) > 0.01 || Math.abs(gamepad1.right_stick_x) > 0.01) {

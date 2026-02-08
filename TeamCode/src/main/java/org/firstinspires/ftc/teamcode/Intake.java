@@ -58,11 +58,11 @@ public final class Intake {
     double middleColorHueLowerBound = -15;
     double middleColorDis = 12;
     //------------- back sensor -------------
-    double backColorHuePurpleBall = 200;
+    double backColorHuePurpleBall = 180;
     double backColorHueGreenBall = 160;
     double backColorHueUpperBound = 10;
     double backColorHueLowerBound = -10;
-    double backColorDis = 4.6;//5.5
+    double backColorDis = 4.0;//5.5->4.6
 
 
 
@@ -381,6 +381,9 @@ public final class Intake {
 
             }
             firstStep = "N";
+            if (secondStep.equals("N")) {
+                ballsStored = false;
+            }
         } else {
             if (!secondStep.equals("N")) {
                 if (secondStep.equals("T")) {

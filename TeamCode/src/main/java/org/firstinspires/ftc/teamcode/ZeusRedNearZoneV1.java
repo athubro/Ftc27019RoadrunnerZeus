@@ -25,7 +25,7 @@ public class ZeusRedNearZoneV1 extends LinearOpMode {
 
     private Pose2d firstSpikeFurther = new Pose2d(-16.5344, 46.313, Math.toRadians(90.07));
     private Pose2d secondSpikeStart = new Pose2d(3.915, 21.7272, Math.toRadians(80.22));
-    private Pose2d secondSpikeEnd = new Pose2d(6.746, 44.138, Math.toRadians(89.12));
+    private Pose2d secondSpikeEnd = new Pose2d(6.746, 47.138, Math.toRadians(89.12));
     private Pose2d secondSpikeFurther = new Pose2d(6.746, 51.7, Math.toRadians(90.4));
     private Pose2d gatePrepare = new Pose2d(7.5839, 45.11, Math.toRadians(123.18));
     //with intake
@@ -37,7 +37,7 @@ public class ZeusRedNearZoneV1 extends LinearOpMode {
     private Pose2d thirdSpikeEnd = new Pose2d(29.7, 41.75, Math.toRadians(92.6));
 
     private Pose2d thirdSpikeFurther = new Pose2d(29.8,50 , Math.toRadians(94.3));
-    private Pose2d park = new Pose2d(-0.3, 44.8, Math.toRadians(16));
+    private Pose2d park = new Pose2d(-0.3, 40.8, Math.toRadians(16));
     private Pose2d finalShootingPos = new Pose2d(-40.8958, 8.795, Math.toRadians(110.458));
     //private Vector2d fina = new Vector2d(-35.4,-19);
     //private double secondShootingHeading = Math.toRadians(50);
@@ -119,7 +119,7 @@ public class ZeusRedNearZoneV1 extends LinearOpMode {
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose()).
                         strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading).strafeToLinearHeading(secondSpikeEnd.position,secondSpikeEnd.heading,new TranslationalVelConstraint(70)).build(),
-                        myRobot.intakePower(0.1),//, new TranslationalVelConstraint(10)
+                        myRobot.intakePower(0.5),//, new TranslationalVelConstraint(10)
                         myRobot.turnOffUpdate())));
 
 
@@ -132,11 +132,14 @@ public class ZeusRedNearZoneV1 extends LinearOpMode {
                         myRobot.shooterSpinUp(),
                         drive.actionBuilder(drive.localizer.getPose()).setReversed(true).splineToLinearHeading(shotingPos,Math.toRadians(-170))
                                 .build(),
+                        myRobot.turnOnTracking(),
 
                         myRobot.fireBalls(),
                         myRobot.resetIntakeTimer(),
                         myRobot.waitEmptyStorage(),
                         myRobot.closeGate(),
+                        myRobot.turnOffTracking(),
+
                         myRobot.shooterStop(),//, new TranslationalVelConstraint(10)
                         myRobot.turnOffUpdate())));
 
@@ -148,7 +151,7 @@ public class ZeusRedNearZoneV1 extends LinearOpMode {
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
                         .strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading)
                         .strafeToLinearHeading(gatePrepare.position,gatePrepare.heading)
-                        .strafeToLinearHeading(gateOpen.position,gateOpen.heading, new TranslationalVelConstraint(40))
+                        .strafeToLinearHeading(gateOpen.position,gateOpen.heading, new TranslationalVelConstraint(45)).waitSeconds(0.1)
                         .strafeToLinearHeading(gateRetrive.position,gateRetrive.heading).build(),
                         myRobot.resetIntakeTimer(),
                         myRobot.waitFullStorage(),
@@ -167,11 +170,14 @@ public class ZeusRedNearZoneV1 extends LinearOpMode {
                         drive.actionBuilder(drive.localizer.getPose())
                                 .setReversed(true).splineToLinearHeading(shotingPos,Math.toRadians(-170))
                                 .build(),
+                        myRobot.turnOnTracking(),
 
                         myRobot.fireBalls(),
                         myRobot.resetIntakeTimer(),
                         myRobot.waitEmptyStorage(),
                         myRobot.closeGate(),
+                        myRobot.turnOffTracking(),
+
                         myRobot.shooterStop(),
                         myRobot.turnOffUpdate())));
 
@@ -182,7 +188,7 @@ public class ZeusRedNearZoneV1 extends LinearOpMode {
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
                         .strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading)
-                        .strafeToLinearHeading(gateOpen.position,gateOpen.heading, new TranslationalVelConstraint(40))
+                        .strafeToLinearHeading(gateOpen.position,gateOpen.heading, new TranslationalVelConstraint(45)).waitSeconds(0.1)
                         .strafeToLinearHeading(gateRetrive.position,gateRetrive.heading).build(), // speed was 40 to gate open
                         myRobot.resetIntakeTimer(),
                         myRobot.waitFullStorage(),
@@ -201,11 +207,14 @@ public class ZeusRedNearZoneV1 extends LinearOpMode {
                         drive.actionBuilder(drive.localizer.getPose())
                                 .setReversed(true).splineToLinearHeading(shotingPos,Math.toRadians(-170))
                                 .build(),
+                        myRobot.turnOnTracking(),
 
                         myRobot.fireBalls(),
                         myRobot.resetIntakeTimer(),
                         myRobot.waitEmptyStorage(),
                         myRobot.closeGate(),
+                        myRobot.turnOffTracking(),
+
                         myRobot.shooterStop(),
                         //myRobot.intakePower(0),
                         myRobot.turnOffUpdate())));
@@ -217,7 +226,7 @@ public class ZeusRedNearZoneV1 extends LinearOpMode {
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose()).
                         strafeToLinearHeading(firstSpikeStart.position,firstSpikeStart.heading).strafeToLinearHeading(firstSpikeEnd.position,firstSpikeEnd.heading,new TranslationalVelConstraint(70)).build(),
-                        myRobot.intakePower(0.1),//, new TranslationalVelConstraint(10)
+                        myRobot.intakePower(0.5),//, new TranslationalVelConstraint(10)
                         myRobot.turnOffUpdate())));
 
 
@@ -233,12 +242,14 @@ public class ZeusRedNearZoneV1 extends LinearOpMode {
 
                                 .strafeToLinearHeading(finalShootingPos.position,finalShootingPos.heading)
                                 .build(),
+                        myRobot.turnOnTracking(),
 
                         myRobot.fireBalls(),
                         myRobot.resetIntakeTimer(),
                         myRobot.waitEmptyStorage(),
                         myRobot.closeGate(),
                         myRobot.shooterStop(),
+                        myRobot.turnOffTracking(),
                         //myRobot.intakePower(0),
                         myRobot.turnOffUpdate())));
 

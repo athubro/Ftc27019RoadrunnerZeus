@@ -22,7 +22,7 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
     private Pose2d lastSpikeEnd = new Pose2d(40.012, -56.67, Math.toRadians(-90.128));
     private Pose2d lastSpikeFurther = new Pose2d(39.766, -66.571, Math.toRadians(-90.5));
 
-    private Pose2d shotingPos = new Pose2d(59.1073, -22.21, Math.toRadians(-107.479));
+    private Pose2d shotingPos = new Pose2d(58.1073, -29.21, Math.toRadians(-109.479));
     private Pose2d cornerStart = new Pose2d(67.257, -60.174, Math.toRadians(-84.43));
     private Pose2d cornerEnd = new Pose2d(67.544, -67.495, Math.toRadians(-94.685));
     private Pose2d cornerSlideBack = new Pose2d(62.371, -62.0515, Math.toRadians(-91.017));
@@ -195,9 +195,9 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
                         .strafeToLinearHeading(scoopPrepare.position,scoopPrepare.heading)
-                        .strafeToLinearHeading(scoopFront.position,scoopFront.heading, new TranslationalVelConstraint(12))
+                        .strafeToLinearHeading(scoopFront.position,scoopFront.heading, new TranslationalVelConstraint(30))
                         .strafeToLinearHeading(sideScoopPrepare.position,sideScoopPrepare.heading)
-                        .strafeToLinearHeading(sideScoopFront.position,sideScoopFront.heading, new TranslationalVelConstraint(12)).build(),
+                        .strafeToLinearHeading(sideScoopFront.position,sideScoopFront.heading, new TranslationalVelConstraint(30)).build(),
                         // myRobot.resetIntakeTimer(),
                         // myRobot.waitFullStorage(),
 
@@ -226,7 +226,19 @@ public class ZeusBlueFarZoneV1 extends LinearOpMode {
                         myRobot.turnOffTracking(),
 
                         myRobot.turnOffUpdate())));
-/*
+
+        drive.updatePoseEstimate();
+        RobotInfoStorage.autoEndPose = drive.localizer.getPose();
+
+        Actions.runBlocking(myRobot.turnOnUpdate());
+        Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
+                new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
+                        .strafeToLinearHeading(park.position,park.heading).build(),
+                        // myRobot.resetIntakeTimer(),
+                        // myRobot.waitFullStorage(),
+
+                        myRobot.turnOffUpdate())));
+        /*
 /*
 
         drive.updatePoseEstimate();

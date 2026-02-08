@@ -278,7 +278,7 @@ public class ZeusTeleOPRedV1 extends LinearOpMode {
             if ((!gamepad1.aWasPressed()) ) {
                 if (!autoDrive) {
                     Vector2d translation = new Vector2d((speedRatio * (-gamepad1.left_stick_y)), (speedRatio * (-gamepad1.left_stick_x)));
-                    double rotation = -speedRatio * gamepad1.right_stick_x;
+                    double rotation = -0.65 * gamepad1.right_stick_x;
                     myDrive.setDrivePowers(new PoseVelocity2d(translation, rotation));
                 } else {
                     if (Math.abs(gamepad1.left_stick_y) > 0.01 || Math.abs(gamepad1.left_stick_x) > 0.01 || Math.abs(gamepad1.right_stick_x) > 0.01) {

@@ -9,8 +9,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name = "ZeusTeleOPRed v1", group = "TeleOp")
-public class ZeusTeleOPRedV1 extends LinearOpMode {
+@TeleOp(name = "ForbiddenTeleopBlue v1", group = "TeleOp")
+public class ForbiddenTeleopBlue extends LinearOpMode {
 
     public RobotInfoStorage info;
     public  MecanumDrive myDrive;
@@ -31,8 +31,6 @@ public class ZeusTeleOPRedV1 extends LinearOpMode {
 
     private double speedRatio = 0.75;
 
-    private double rotationPower = 0.65;
-
     @Override
     public void runOpMode() {
 
@@ -46,9 +44,7 @@ public class ZeusTeleOPRedV1 extends LinearOpMode {
         rgbIndicator = hardwareMap.get(Servo.class, "rgbLight");
 
         // Configure turret
-        turret.PARAMS.TARGET_TAG_ID = 24;
-        turret.LLFarZoneOffset = -2;
-        turret.targetPos = new Vector2d(-53, 60);
+        turret.PARAMS.TARGET_TAG_ID = 20;
         turret.setAutoAngleEnabled(false);  // Start with manual angle control
         turret.setAutoRPMEnabled(false);    // Start with manual RPM control
         turret.setTrackingMode(false);      // Start with manual heading control
@@ -89,12 +85,8 @@ public class ZeusTeleOPRedV1 extends LinearOpMode {
                 speedRatio = 1.0;  // Full speed
             } else if (gamepad1.left_bumper) {
                 speedRatio = 0.3;  // Slow speed
-                rotationPower = 0.3;  // Slow speed
-
             } else {
                 speedRatio = 0.75; // Normal speed
-                rotationPower = 0.65;  // Slow speed
-
             }
 
             // =========================
@@ -112,7 +104,7 @@ public class ZeusTeleOPRedV1 extends LinearOpMode {
 */
 
 
-            if (gamepad2.bWasPressed()) {
+            if (gamepad1.bWasPressed()) {
                 boolean tempState = !turret.trackingMode;
                 turret.setTrackingMode(tempState);
                 turret.setAutoAngleEnabled(tempState);
@@ -126,7 +118,7 @@ public class ZeusTeleOPRedV1 extends LinearOpMode {
             }
 
             // Toggle Vision vs Odom tracking
-            if (gamepad2.aWasPressed()) {
+            if (gamepad1.aWasPressed()) {
                 boolean tempState ;
                 if (usingOdomTracking) {
                     tempState= true;
@@ -177,21 +169,22 @@ public class ZeusTeleOPRedV1 extends LinearOpMode {
                 intake.storeBalls(motiff);
             }
             if (gamepad1.dpad_right) {
-
-                motiff[0] = "P";
-                motiff[1] = "G";
-                motiff[2] = "P";
-                //rgbIndicator.setPosition(0.722);
-                intake.resetAll();
+                if ((!intake.firstStep.equals("N")) || (!intake.secondStep.equals("N"))) {
+                    intake.executeNextStep();
+                } else {
+                    //rgbIndicator.setPosition(0.722);
+                    intake.resetAll();
+                }
             }
             if ((!intake.firstStep.equals("N")) || (!intake.secondStep.equals("N"))) {
                 // Reset all compartments to pass-through
-                if (intake.ballCount == 0 && gamepad2.left_trigger > 0.1 && sortTimer.seconds() > 0.6) {
+                if ( intake.ballCount == 0 &&gamepad1.left_trigger > 0.1 && sortTimer.seconds() > 0.6) {//
                     intake.executeNextStep();
                     sortTimer.reset();
                     //========resetted?^^^^
                 }
             }
+
 
 
             // Enable/disable shooting with triggers
@@ -247,13 +240,13 @@ public class ZeusTeleOPRedV1 extends LinearOpMode {
                 } else {
                     rgbIndicator.setPosition(0.36);
                 }
-            } else if (Math.abs(gamepad1.left_trigger) > 0.1) {
-                intake.setIntakePower(-gamepad1.left_trigger);  // Manual control
+            } else if (Math.abs(gamepad2.left_trigger) > 0.1) {
+                intake.setIntakePower(-gamepad2.left_trigger);  // Manual control
             } else {
                 intake.setIntakePower(0);  // Stop
             }
-            if (gamepad2.left_trigger > 0.1) {
-                intake.setIntakePower(gamepad2.left_trigger);  // Intake
+            if (gamepad1.left_trigger > 0.1) {
+                intake.setIntakePower(gamepad1.left_trigger);  // Intake
                 if (ableResetTime) {
                     sortTimer.reset();
                     ableResetTime = false;
@@ -281,10 +274,10 @@ public class ZeusTeleOPRedV1 extends LinearOpMode {
             // UPDATE ALL SYSTEMS
             // =========================
                     //==========================================================================================
-            if ((!gamepad1.aWasPressed()) ) {
+            if ((!gamepad1.rightBumperWasPressed()) ) {
                 if (!autoDrive) {
                     Vector2d translation = new Vector2d((speedRatio * (-gamepad1.left_stick_y)), (speedRatio * (-gamepad1.left_stick_x)));
-                    double rotation = -rotationPower * gamepad1.right_stick_x;
+                    double rotation = -0.65 * gamepad1.right_stick_x;
                     myDrive.setDrivePowers(new PoseVelocity2d(translation, rotation));
                 } else {
                     if (Math.abs(gamepad1.left_stick_y) > 0.01 || Math.abs(gamepad1.left_stick_x) > 0.01 || Math.abs(gamepad1.right_stick_x) > 0.01) {
@@ -310,7 +303,7 @@ public class ZeusTeleOPRedV1 extends LinearOpMode {
             if (gamepad1.startWasPressed()) {
                 targetPose = myDrive.localizer.getPose();
             }
-            if (gamepad1.bWasPressed()) {
+            if (gamepad1.leftBumperWasPressed()) {
                 targetPose = new Pose2d(40, 32, 0 );
             }
 

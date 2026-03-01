@@ -125,7 +125,7 @@ public class SSMyRobot  {
                 return false;
             }
             //intake.ballCount == 0 ||
-            if ( intakeTime.seconds() > 1.3) {
+            if ( intakeTime.seconds() > 0.7) {
                 return false;
             } else {
                 return true;
@@ -453,7 +453,7 @@ public class SSMyRobot  {
         }
     }
 
-    public Action dectMotiff(){
+    public Action detectMotiff(){
         return new DetectMotiff();
     }
 

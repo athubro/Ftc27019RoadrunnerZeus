@@ -25,10 +25,10 @@ public final class Turret {
     // ==================== PARAMETERS ====================
     public class Params {
         public static final double PID_INTERVAL = 0.1; // Flywheel PID
-        public double kP = 50.0;
+        public double kP = 50.0;//60, 15.929
         public double kI = 0.0;
         public double kD = 0.0;
-        public double kF = 10.0; // Flywheel motor
+        public double kF = 14.0; // Flywheel motor
         public static final double TICKS_PER_REV = 28.0;
         public double toleranceRPM = 350.0; // Vision
         public int TARGET_TAG_ID = 20;

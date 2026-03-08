@@ -48,7 +48,7 @@ public final class Turret5Turn {
         public static final double GEAR_RATIO = BIG_GEAR_TEETH / SMALL_GEAR_TEETH;
         public static final double BIG_GEAR_DEG_PER_SMALL_REV = 360.0 / GEAR_RATIO;
         public static final double TICKS_PER_BIG_GEAR_DEGREE = TICKS_PER_SMALL_REV / BIG_GEAR_DEG_PER_SMALL_REV;
-        public static final double servoPosPerDeg = 1.0 /175; //175 is total range
+        public static final double servoPosPerDeg = (0.7-0.3) /175; //175 is total degree range, 0.7-0.3 is range of servo
         // Soft limits
         public static final double TURRET_MIN_DEG = -87.0;
         public static final double TURRET_MAX_DEG = 87.0;
@@ -354,7 +354,7 @@ public final class Turret5Turn {
 
 
         } else{
-          //  previousDesiredDeg=200;
+           previousDesiredDeg=200;
             fineAdjustmentFlag=false;
           //  turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
         }
@@ -423,6 +423,9 @@ public final class Turret5Turn {
 
     public void sendTelemetry() {
         TelemetryPacket packet = new TelemetryPacket();
+        packet.put("errorAngle", errorAngleDeg);
+        packet.put("turretCurrentPos", turretServo.getPosition());
+        packet.put("previouslyDesiredAngle", previousDesiredDeg);
         packet.put("Left RPM", currentRPMLeft);
         packet.put("Right RPM", currentRPMRight);
         packet.put("Target RPM", targetRPM);
@@ -525,7 +528,7 @@ public final class Turret5Turn {
             //turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
            // turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
             if (!useOdometryTracking){
-               // previousDesiredDeg=200;
+                previousDesiredDeg=200;
             }
 
 
@@ -584,17 +587,17 @@ public final class Turret5Turn {
         TurretDesiredDeg=desiredDeg;
         if (useOdometryTracking){ //useOdometryTracking
             // Convert to ticks and set target position
-         //   if (Math.abs(desiredDeg-previousDesiredDeg)>5){
+            if (Math.abs(desiredDeg-previousDesiredDeg)>5){
                 turretTargetPosition = (desiredDeg * PARAMS.servoPosPerDeg)+0.5;
                 turretServo.setPosition(turretTargetPosition);
-             //   previousDesiredDeg=desiredDeg;
-           // }
+                previousDesiredDeg=desiredDeg;
+            }
         } else{
-            //if (Math.abs(desiredDeg-previousDesiredDeg)>PARAMS.TURRET_POSITION_TOLERANCE_DEG) {
+            if (Math.abs(desiredDeg-previousDesiredDeg)>PARAMS.TURRET_POSITION_TOLERANCE_DEG) {
                 turretTargetPosition =  (desiredDeg *PARAMS.servoPosPerDeg)+0.5;
                 turretServo.setPosition(turretTargetPosition);
-              //  previousDesiredDeg = desiredDeg;
-            //}
+                previousDesiredDeg = desiredDeg;
+            }
         }
 
 

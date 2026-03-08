@@ -36,7 +36,7 @@ public class ZeusTeleOPBlue5Turn extends LinearOpMode {
 
         // Initialize all systems
         info = new RobotInfoStorage();
-        initialPose = RobotInfoStorage.autoEndPose;
+      //  initialPose = RobotInfoStorage.autoEndPose;
         myDrive= new MecanumDrive(hardwareMap, initialPose);
         turret = new Turret5Turn(hardwareMap, myDrive ,telemetry, initialPose);
         intake = new Intake(hardwareMap, telemetry);
@@ -327,6 +327,11 @@ public class ZeusTeleOPBlue5Turn extends LinearOpMode {
             // =========================
             // TELEMETRY
             // =========================
+
+            telemetry.addData("errorAngle", turret.errorAngleDeg);
+            telemetry.addData("turretCurrentPos", turret.turretServo.getPosition());
+            telemetry.addData("previouslyDesiredAngle", turret.previousDesiredDeg);
+
             telemetry.addData("motiff 0 ",motiff[0]);
             telemetry.addData("motiff 1 ",motiff[1]);
             telemetry.addData("motiff 2 ",motiff[2]);

@@ -113,7 +113,7 @@ public final class Turret5Turn {
 
     public double TurretDesiredDeg=0;
     public boolean useOdometryTracking = false;
-    public  Vector2d targetPos = new Vector2d(-53, -60); // Turret target position (in ticks)
+    public  Vector2d targetPos = new Vector2d(-50, -60); // Turret target position (in ticks)
     public double turretTargetPosition = 0;
     public double previousDesiredDeg=0;
     // Motiff detection (added back from old code)
@@ -356,6 +356,7 @@ public final class Turret5Turn {
         } else{
            previousDesiredDeg=200;
             fineAdjustmentFlag=false;
+            turretServo.setPosition(0.5);
           //  turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
         }
         if (useOdometryTracking || trackingMode) {
@@ -548,7 +549,7 @@ public final class Turret5Turn {
          */
         errorDeg = errorAngleDeg - targetAngle;
         // Low-pass filter for smooth response
-        smoothedErrorDeg = 0.75 * smoothedErrorDeg + 0.25 * errorDeg;
+      //  smoothedErrorDeg = 0.75 * smoothedErrorDeg + 0.25 * errorDeg;
         // Check if aligned
         if (Math.abs(errorDeg) < PARAMS.TURRET_POSITION_TOLERANCE_DEG) {
             hasAligned = true;
@@ -593,7 +594,7 @@ public final class Turret5Turn {
                 previousDesiredDeg=desiredDeg;
             }
         } else{
-            if (Math.abs(desiredDeg-previousDesiredDeg)>PARAMS.TURRET_POSITION_TOLERANCE_DEG) {
+            if (Math.abs(desiredDeg-previousDesiredDeg)>2) { //limelight
                 turretTargetPosition =  (desiredDeg *PARAMS.servoPosPerDeg)+0.5;
                 turretServo.setPosition(turretTargetPosition);
                 previousDesiredDeg = desiredDeg;

@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name = "ZeusTeleOPBlue v1", group = "TeleOp")
+@TeleOp(name = "ZeusTeleOPBlue v2 5 turn", group = "TeleOp")
 public class ZeusTeleOPBlue5Turn extends LinearOpMode {
 
     public RobotInfoStorage info;

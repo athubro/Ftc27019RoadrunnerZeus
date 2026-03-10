@@ -25,7 +25,7 @@ public final class Turret {
     // ==================== PARAMETERS ====================
     public class Params {
         public static final double PID_INTERVAL = 0.1; // Flywheel PID
-        public double kP = 50.0;//60, 15.929
+        public double kP = 65.0;//60, 15.929
         public double kI = 0.0;
         public double kD = 0.0;
         public double kF = 14.0; // Flywheel motor
@@ -139,7 +139,7 @@ public final class Turret {
         leftFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightFlywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         double batteryVoltage = hardwareMap.voltageSensor.iterator().next().getVoltage();
-        PARAMS.kF = -2.21 * batteryVoltage + 42.9;
+        PARAMS.kF = -0.702 * batteryVoltage + 24.3;
         leftFlywheel.setVelocityPIDFCoefficients(PARAMS.kP, PARAMS.kI, PARAMS.kD, PARAMS.kF);
         rightFlywheel.setVelocityPIDFCoefficients(PARAMS.kP, PARAMS.kI, PARAMS.kD, PARAMS.kF);
 

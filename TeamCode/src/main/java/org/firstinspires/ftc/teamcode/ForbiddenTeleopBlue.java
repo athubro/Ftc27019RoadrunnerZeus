@@ -49,7 +49,7 @@ public class ForbiddenTeleopBlue extends LinearOpMode {
         turret.setAutoRPMEnabled(false);    // Start with manual RPM control
         turret.setTrackingMode(false);      // Start with manual heading control
         turret.actionFlagForTurning=true;
-        turret.fineAdjustmentFlag=true;
+        turret.fineAdjustmentFlag=false;
         turret.teleOpOnly=true;
         telemetry.addLine("=== SYSTEM READY ===");
         telemetry.addLine("Turret + Drive + Intake Initialized");

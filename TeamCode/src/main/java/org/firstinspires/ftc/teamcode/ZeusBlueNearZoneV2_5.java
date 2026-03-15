@@ -90,6 +90,7 @@ public class ZeusBlueNearZoneV2_5 extends LinearOpMode {
                         myRobot.contCalcRPMAndAngle(),
                         myRobot.shooterSpinUp(),
                         new SequentialAction(
+                                myRobot.resetCompartment(),
                                 myRobot.turnOnTracking(),
                                 myRobot.fireBalls(),
                                 myRobot.resetIntakeTimer(),

@@ -188,6 +188,24 @@ public class SSMyRobot  {
 
 
 
+
+
+
+    public class ResetCompartments implements Action {
+
+        public boolean run(@NonNull TelemetryPacket pack) {
+            intake.resetAll();
+            return false;
+
+        }
+    }
+
+    public Action resetCompartment() {
+        return new ResetCompartments();
+    }
+
+
+
     //=======================================================================================================
 
 /*

@@ -631,17 +631,17 @@ public final class Turret {
         targetAngle=-velocityParallelGoal*angleCorrFactor;
         double x = disToAprilTag;
         if (tagFound) {
-            targetRPM = 11.6 * x + 1650 - velocityCorFactor * velocityTowardGoal;
-            /*
+           // targetRPM = 11.6 * x + 1650 - velocityCorFactor * velocityTowardGoal;
+
             if (x<95) {
-                //targetRPM = 12.6 * x + 1586 - velocityCorFactor * velocityTowardGoal;///1586
+                targetRPM = 11.6 * x + 1650 - velocityCorFactor * velocityTowardGoal;
 
             } else {
-                targetRPM = 3050;
+                targetRPM = 11.6 * x + 1720 - velocityCorFactor * velocityTowardGoal;
             }
 
-             */
-            targetRPM = clamper(targetRPM, 1586, 3500);
+
+            targetRPM = clamper(targetRPM, 1586, 4000);
         }
     }
 

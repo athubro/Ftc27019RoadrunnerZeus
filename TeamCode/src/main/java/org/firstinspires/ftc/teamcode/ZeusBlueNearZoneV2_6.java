@@ -36,7 +36,7 @@ public class ZeusBlueNearZoneV2_6 extends LinearOpMode {
 
     private Pose2d thirdSpikeFurther = new Pose2d(39.148, -66.8586, Math.toRadians(-91.583));
     private Pose2d park = new Pose2d(0.366, -48.9, Math.toRadians(-0.305));
-    private Pose2d finalShootingPos = new Pose2d(-35.4,-22, Math.toRadians(-91));
+    private Pose2d finalShootingPos = new Pose2d(-33.4,-23.3, Math.toRadians(-95));
     //private Vector2d fina = new Vector2d(-35.4,-19);
     //private double secondShootingHeading = Math.toRadians(50);
 

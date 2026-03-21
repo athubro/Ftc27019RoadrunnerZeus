@@ -78,11 +78,11 @@ public class SSMyRobot  {
         public boolean run(@NonNull TelemetryPacket pack) {
             intake.storageUpdate();
             intake.storeBalls(target);
-            if (intake.ballsStored) {
+            //if (intake.finishedStoring) {
                 return false;
-            } else {
-                return true;
-            }
+            //} else {
+            //    return true;
+            //}
         }
     }
 
@@ -125,7 +125,7 @@ public class SSMyRobot  {
                 return false;
             }
             //intake.ballCount == 0 ||
-            if ( intakeTime.seconds() > 0.7) {
+            if ( intakeTime.seconds() >1.2) {
                 return false;
             } else {
                 return true;

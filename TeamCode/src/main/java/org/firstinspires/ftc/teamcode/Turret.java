@@ -634,10 +634,12 @@ public final class Turret {
            // targetRPM = 11.6 * x + 1650 - velocityCorFactor * velocityTowardGoal;
 
             if (x<95) {
-                targetRPM = 11.6 * x + 1650 - velocityCorFactor * velocityTowardGoal;
-
+               // targetRPM = 11.6 * x + 1650 - velocityCorFactor * velocityTowardGoal;
+                targetRPM = 10.4 * x + 1875 - velocityCorFactor * velocityTowardGoal;
             } else {
-                targetRPM = 11.6 * x + 1720 - velocityCorFactor * velocityTowardGoal;
+              //  targetRPM = 11.6 * x + 1720 - velocityCorFactor * velocityTowardGoal;
+                targetRPM = 10.4 * x + 1900 - velocityCorFactor * velocityTowardGoal;
+
             }
 
 
@@ -650,9 +652,12 @@ public final class Turret {
         if (tagFound) {
             double shooterAngleSetting;
             if (x < 95) {
-                shooterAngleSetting = 1.76*0.001*x-0.0829;
+                //shooterAngleSetting = 1.76*0.001*x-0.0829;
+                shooterAngleSetting = -1.25 + 0.0681*x - 0.000781*x*x + 0.00000293*x*x*x;
             } else {
-                shooterAngleSetting = 0.75;
+               // shooterAngleSetting = 0.75;
+                shooterAngleSetting = -1.25 + 0.0681*x - 0.000781*x*x + 0.00000293*x*x*x;
+
             }
             turretAnglePos = clamper(shooterAngleSetting, 0.0, 1.0);
         }

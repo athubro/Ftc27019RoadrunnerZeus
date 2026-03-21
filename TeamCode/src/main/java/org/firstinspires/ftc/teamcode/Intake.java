@@ -291,10 +291,12 @@ public final class Intake {
     }
     public void storeBalls (String[] target) {
         String[] output = {"N", "N", "N"};
+        finishedStoring = false;
         //to shoot (first ball to shoot);
         String firstBall = "N";
         if (!ballsStored) {
-            if ((storage[0].equals(storage[1]) && storage[0].equals(storage[2]))) {
+            //  if ((storage[0].equals(storage[1]) && storage[0].equals(storage[2]))) {
+            if ((storage[0].equals(storage[1]) && storage[0].equals(storage[2])) || Arrays.equals(storage, target)) {
                 firstStep = "N";
                 secondStep = "N";
                 ballsStored = false;

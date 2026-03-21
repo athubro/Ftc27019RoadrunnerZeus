@@ -9,8 +9,8 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-@Autonomous(name = "ZeusBlueNearZoneV2.meh", group = "Autonomous")
-public class ZeusBlueNearZoneV2_7 extends LinearOpMode {
+@Autonomous(name = "ZeusBlueNearZoneV1 sorting (12ball)", group = "Autonomous")
+public class ZeusBlueNearZoneV2_5_5Sorting extends LinearOpMode {
 
     private Turret turretSystem;
     private MecanumDrive drive;
@@ -18,17 +18,19 @@ public class ZeusBlueNearZoneV2_7 extends LinearOpMode {
     private RobotInfoStorage info;
     private Pose2d startPose = new Pose2d(-45.2766, -61.5312, Math.toRadians(-127.6875));
     private Pose2d firstShootingPos = new Pose2d(-15, -30, Math.toRadians(-115.56));
-    private Pose2d shotingPos = new Pose2d(-10.923, -28.695, Math.toRadians(-115.56));//(-32.66, -24.08, Math.toRadians(45));
+    private Pose2d shotingPos = new Pose2d(-9.923, -25.695, Math.toRadians(-115.56));//(-32.66, -24.08, Math.toRadians(45));
     private Pose2d firstSpikeStart = new Pose2d(-9.746, -34.06, Math.toRadians(-84.316));
+    private Pose2d firstSpikeLook = new Pose2d(-9.746, -34.06, Math.toRadians(170));
+
     private Pose2d firstSpikeEnd = new Pose2d(-8.5665, -54.037, Math.toRadians(-91.45));
 
     private Pose2d firstSpikeFurther = new Pose2d(-8.8385, -60.4869, Math.toRadians(-91.697));
     private Pose2d secondSpikeStart = new Pose2d(14.44, -35.727, Math.toRadians(-81.94));
     private Pose2d secondSpikeEnd = new Pose2d(16.352, -59.976, Math.toRadians(-84.186));
     private Pose2d secondSpikeFurther = new Pose2d(17.835, -68.849, Math.toRadians(-91.67));
-    private Pose2d gatePrepare = new Pose2d(20, -61.996, Math.toRadians(-113.167));
+   // private Pose2d gatePrepare = new Pose2d(19, -61.996, Math.toRadians(-113.167));
     //with intake
-    private Pose2d gateOpen = new Pose2d(15.7, -70.0368, Math.toRadians(-121.8748));
+    private Pose2d gateOpen = new Pose2d(18.5, -67.5, Math.toRadians(-128.9));
 
     private Pose2d thirdSpikeStart = new Pose2d(37.5592, -34.6989, Math.toRadians(-79.336));
 
@@ -36,7 +38,7 @@ public class ZeusBlueNearZoneV2_7 extends LinearOpMode {
 
     private Pose2d thirdSpikeFurther = new Pose2d(39.148, -66.8586, Math.toRadians(-91.583));
     private Pose2d park = new Pose2d(0.366, -48.9, Math.toRadians(-0.305));
-    private Pose2d finalShootingPos = new Pose2d(-35.4,-19, Math.toRadians(-90));
+    private Pose2d finalShootingPos = new Pose2d(-35.4,-22, Math.toRadians(-91));
     //private Vector2d fina = new Vector2d(-35.4,-19);
     //private double secondShootingHeading = Math.toRadians(50);
 
@@ -63,7 +65,7 @@ public class ZeusBlueNearZoneV2_7 extends LinearOpMode {
         //turretSystem.turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intake = new Intake(hardwareMap, telemetry);
         myRobot = new SSMyRobot(hardwareMap, drive, intake, turretSystem, startPose);
-        turretSystem.useOdometryTracking=true;
+
         Actions.runBlocking (myRobot.setTurretAnlge(-12));
         turretSystem.targetRPM=2500;
 
@@ -90,6 +92,7 @@ public class ZeusBlueNearZoneV2_7 extends LinearOpMode {
                         myRobot.contCalcRPMAndAngle(),
                         myRobot.shooterSpinUp(),
                         new SequentialAction(
+                                myRobot.resetCompartment(),
                                 myRobot.turnOnTracking(),
                                 myRobot.fireBalls(),
                                 myRobot.resetIntakeTimer(),
@@ -115,8 +118,10 @@ public class ZeusBlueNearZoneV2_7 extends LinearOpMode {
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose()).
-                        strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading).strafeToLinearHeading(secondSpikeEnd.position,secondSpikeEnd.heading,new TranslationalVelConstraint(70)).build(),
-                        myRobot.intakePower(0.1),//, new TranslationalVelConstraint(10)
+                        strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading).strafeToLinearHeading(secondSpikeEnd.position,secondSpikeEnd.heading,new TranslationalVelConstraint(70)).strafeToLinearHeading(gateOpen.position,gateOpen.heading).waitSeconds(0.3).strafeToLinearHeading(firstSpikeLook.position,firstSpikeLook.heading).build(),
+                        myRobot.detectMotiff(),
+                        myRobot.intakePower(0.5),//, new TranslationalVelConstraint(10)
+                        myRobot.storeBalls(turretSystem.motiff),
                         myRobot.turnOffUpdate())));
 
 
@@ -129,81 +134,18 @@ public class ZeusBlueNearZoneV2_7 extends LinearOpMode {
                         myRobot.shooterSpinUp(),
                         drive.actionBuilder(drive.localizer.getPose()).setReversed(true).splineToLinearHeading(shotingPos,Math.toRadians(170))
                                 .build(),
+                        myRobot.turnOnTracking(),
 
                         myRobot.fireBalls(),
                         myRobot.resetIntakeTimer(),
                         myRobot.waitEmptyStorage(),
+                        myRobot.executeNextStep(),
+                        myRobot.waitSorting(),
+                        myRobot.executeNextStep(),
+                        myRobot.waitSorting(),
                         myRobot.closeGate(),
+                        myRobot.turnOffTracking(),
                         myRobot.shooterStop(),//, new TranslationalVelConstraint(10)
-                        myRobot.turnOffUpdate())));
-
-        drive.updatePoseEstimate();
-        RobotInfoStorage.autoEndPose = drive.localizer.getPose();
-
-        Actions.runBlocking(myRobot.turnOnUpdate());
-        Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
-                new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
-                        .strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading)
-                        .strafeToLinearHeading(gatePrepare.position,gatePrepare.heading)
-                        .strafeToLinearHeading(gateOpen.position,gateOpen.heading, new TranslationalVelConstraint(40)).build(),
-                        myRobot.resetIntakeTimer(),
-                        myRobot.waitFullStorage(),
-
-                        myRobot.turnOffUpdate())));
-
-        //========================================================================
-
-        drive.updatePoseEstimate();
-        RobotInfoStorage.autoEndPose = drive.localizer.getPose();
-
-        Actions.runBlocking(myRobot.turnOnUpdate());
-        Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
-                new SequentialAction(
-                        myRobot.shooterSpinUp(),
-                        drive.actionBuilder(drive.localizer.getPose())
-                                .setReversed(true).splineToLinearHeading(shotingPos,Math.toRadians(170))
-                                .build(),
-
-                        myRobot.fireBalls(),
-                        myRobot.resetIntakeTimer(),
-                        myRobot.waitEmptyStorage(),
-                        myRobot.closeGate(),
-                        myRobot.shooterStop(),
-                        myRobot.turnOffUpdate())));
-
-        drive.updatePoseEstimate();
-        RobotInfoStorage.autoEndPose = drive.localizer.getPose();
-
-        Actions.runBlocking(myRobot.turnOnUpdate());
-        Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
-                new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
-                        .strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading)
-                        .strafeToLinearHeading(gatePrepare.position,gatePrepare.heading)
-                        .strafeToLinearHeading(gateOpen.position,gateOpen.heading, new TranslationalVelConstraint(40)).build(),
-                        myRobot.resetIntakeTimer(),
-                        myRobot.waitFullStorage(),
-
-                        myRobot.turnOffUpdate())));
-        //========================================================================
-
-        drive.updatePoseEstimate();
-        RobotInfoStorage.autoEndPose = drive.localizer.getPose();
-
-        Actions.runBlocking(myRobot.turnOnUpdate());
-        Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
-                new SequentialAction(
-
-                        myRobot.shooterSpinUp(),
-                        drive.actionBuilder(drive.localizer.getPose())
-                                .setReversed(true).splineToLinearHeading(shotingPos,Math.toRadians(170))
-                                .build(),
-
-                        myRobot.fireBalls(),
-                        myRobot.resetIntakeTimer(),
-                        myRobot.waitEmptyStorage(),
-                        myRobot.closeGate(),
-                        myRobot.shooterStop(),
-                        //myRobot.intakePower(0),
                         myRobot.turnOffUpdate())));
 
         drive.updatePoseEstimate();
@@ -213,7 +155,66 @@ public class ZeusBlueNearZoneV2_7 extends LinearOpMode {
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose()).
                         strafeToLinearHeading(firstSpikeStart.position,firstSpikeStart.heading).strafeToLinearHeading(firstSpikeEnd.position,firstSpikeEnd.heading,new TranslationalVelConstraint(70)).build(),
-                        myRobot.intakePower(0.1),//, new TranslationalVelConstraint(10)
+                        myRobot.intakePower(0.5),//, new TranslationalVelConstraint(10)
+                        myRobot.storeBalls(turretSystem.motiff),
+                        myRobot.turnOffUpdate())));
+
+
+        drive.updatePoseEstimate();
+        RobotInfoStorage.autoEndPose = drive.localizer.getPose();
+
+        //shoooooot
+
+        drive.updatePoseEstimate();
+        RobotInfoStorage.autoEndPose = drive.localizer.getPose();
+
+        Actions.runBlocking(myRobot.turnOnUpdate());
+        Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
+                new SequentialAction(
+                        myRobot.shooterSpinUp(),
+                        drive.actionBuilder(drive.localizer.getPose())
+                                .setReversed(true).splineToLinearHeading(shotingPos,Math.toRadians(170))
+                                .build(),
+                        myRobot.turnOnTracking(),
+
+                        myRobot.fireBalls(),
+                        myRobot.resetIntakeTimer(),
+                        myRobot.waitEmptyStorage(),
+                        myRobot.executeNextStep(),
+                        myRobot.waitSorting(),
+                        myRobot.executeNextStep(),
+                        myRobot.waitSorting(),
+                        myRobot.closeGate(),
+                        myRobot.turnOffTracking(),
+
+                        myRobot.shooterStop(),
+                        myRobot.turnOffUpdate())));
+
+        drive.updatePoseEstimate();
+        RobotInfoStorage.autoEndPose = drive.localizer.getPose();
+
+        //last balls
+
+
+
+        //========================================================================
+
+
+
+
+        //========================================================================
+
+
+
+
+
+
+        Actions.runBlocking(myRobot.turnOnUpdate());
+        Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
+                new SequentialAction( drive.actionBuilder(drive.localizer.getPose()).
+                        strafeToLinearHeading(thirdSpikeStart.position,thirdSpikeStart.heading).strafeToLinearHeading(thirdSpikeEnd.position,thirdSpikeEnd.heading,new TranslationalVelConstraint(70)).build(),
+                        myRobot.intakePower(0.5),//, new TranslationalVelConstraint(10)
+                        myRobot.storeBalls(turretSystem.motiff),
                         myRobot.turnOffUpdate())));
 
 
@@ -229,11 +230,18 @@ public class ZeusBlueNearZoneV2_7 extends LinearOpMode {
 
                                 .strafeToLinearHeading(finalShootingPos.position,finalShootingPos.heading)
                                 .build(),
+                        myRobot.turnOnTracking(),
 
                         myRobot.fireBalls(),
                         myRobot.resetIntakeTimer(),
                         myRobot.waitEmptyStorage(),
+                        myRobot.executeNextStep(),
+                        myRobot.waitSorting(),
+                        myRobot.executeNextStep(),
+                        myRobot.waitSorting(),
                         myRobot.closeGate(),
+                        myRobot.turnOffTracking(),
+
                         myRobot.shooterStop(),
                         //myRobot.intakePower(0),
                         myRobot.turnOffUpdate())));

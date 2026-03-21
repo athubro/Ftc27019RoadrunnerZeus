@@ -466,8 +466,11 @@ public class SSMyRobot  {
         public boolean run(@NonNull TelemetryPacket pack){
             turretSystem.updateMotiff();
             //if (intake.ballCount == 3 || intakeTime.seconds() > 1.5) {
-                    return false;
-
+            if (!turretSystem.motiff[0].equals("N")) {
+                return false;
+            } else {
+                return true;
+            }
         }
     }
 

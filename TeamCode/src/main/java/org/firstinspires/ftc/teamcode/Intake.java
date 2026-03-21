@@ -45,7 +45,7 @@ public final class Intake {
 
 
     //---------------front sensor -----------------
-    double frontColorHuePurpleBall = 227;
+    double frontColorHuePurpleBall = 210;
     double frontColorHueGreenBall = 158;
     double frontColorHueUpperBound = 20;
     double frontColorHueLowerBound = -20;
@@ -58,11 +58,11 @@ public final class Intake {
     double middleColorHueLowerBound = -15;
     double middleColorDis = 12;
     //------------- back sensor -------------
-    double backColorHuePurpleBall = 180;
+    double backColorHuePurpleBall = 205;
     double backColorHueGreenBall = 160;
     double backColorHueUpperBound = 10;
     double backColorHueLowerBound = -10;
-    double backColorDis = 4.0;//5.5->4.6
+    double backColorDis = 5.5;//5.5->4.6->4
 
 
 

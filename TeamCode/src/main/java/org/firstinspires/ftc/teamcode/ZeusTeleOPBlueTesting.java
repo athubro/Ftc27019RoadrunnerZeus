@@ -144,13 +144,16 @@ public class ZeusTeleOPBlueTesting extends LinearOpMode {
                 intake.setIntakePower(1.0);
             } else if (gamepad2.left_trigger > 0.1) {
                 intake.setIntakePower(gamepad2.left_trigger);
+                intake.openGate();
             } else if (Math.abs(gamepad2.left_stick_y) > 0.1) {
                 intake.setIntakePower(gamepad2.left_stick_y);
             } else {
                 intake.setIntakePower(0);
             }
 
-
+            manualTurretDegrees+= -gamepad2.right_stick_x*2;
+            manualTurretDegrees = turret.clamper(manualTurretDegrees, turret.PARAMS.TURRET_MIN_DEG, turret.PARAMS.TURRET_MAX_DEG);
+            turret.manualTurretAngle(manualTurretDegrees);
 
             // =========================
             // UPDATE ALL SYSTEMS

@@ -641,7 +641,7 @@ public final class Turret {
             }
 
 
-            targetRPM = clamper(targetRPM, 1586, 4000);
+            targetRPM = clamper(targetRPM, 1586, 5000);
         }
     }
 

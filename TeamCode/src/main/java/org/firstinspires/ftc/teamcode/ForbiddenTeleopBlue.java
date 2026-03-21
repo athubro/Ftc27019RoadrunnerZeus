@@ -188,11 +188,11 @@ public class ForbiddenTeleopBlue extends LinearOpMode {
 
 
             // Enable/disable shooting with triggers
-            if (gamepad2.right_trigger > 0.2) {
+           // if (true) {
                 turret.setShootingEnabled(true);
-            } else {
-                turret.setShootingEnabled(false);
-            }
+            //} else {
+            //    turret.setShootingEnabled(false);
+            //}
 
             // Manual RPM adjustment (D-pad up/down)
             if (gamepad2.dpadUpWasPressed()) {

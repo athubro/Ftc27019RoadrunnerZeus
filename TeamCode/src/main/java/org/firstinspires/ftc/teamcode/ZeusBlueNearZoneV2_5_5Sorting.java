@@ -26,22 +26,22 @@ public class ZeusBlueNearZoneV2_5_5Sorting extends LinearOpMode {
 
     private Pose2d firstSpikeFurther = new Pose2d(-8.8385, -60.4869, Math.toRadians(-91.697));
     private Pose2d secondSpikeStart = new Pose2d(14.44, -35.727, Math.toRadians(-81.94));
-    private Pose2d secondSpikeEnd = new Pose2d(16.352, -59.976, Math.toRadians(-84.186));
+    private Pose2d secondSpikeEnd = new Pose2d(16.352, -60, Math.toRadians(-84.186));
 
     private Pose2d secondSpikeLook = new Pose2d(12.44, -35.727, Math.toRadians(180));
 
     private Pose2d secondSpikeFurther = new Pose2d(17.835, -68.849, Math.toRadians(-91.67));
    // private Pose2d gatePrepare = new Pose2d(19, -61.996, Math.toRadians(-113.167));
     //with intake
-    private Pose2d gateOpen = new Pose2d(2.05, -56.2, Math.toRadians(-6));
+    private Pose2d gateOpen = new Pose2d(2.05, -56.2, Math.toRadians(1));
 
     private Pose2d thirdSpikeStart = new Pose2d(37.5592, -34.6989, Math.toRadians(-79.336));
 
-    private Pose2d thirdSpikeEnd = new Pose2d(39.354, -58.91, Math.toRadians(-90.622));
+    private Pose2d thirdSpikeEnd = new Pose2d(39.354, -59.91, Math.toRadians(-90.622));
 
     private Pose2d thirdSpikeFurther = new Pose2d(39.148, -66.8586, Math.toRadians(-91.583));
     private Pose2d park = new Pose2d(0.366, -48.9, Math.toRadians(-0.305));
-    private Pose2d finalShootingPos = new Pose2d(-35.4,-22, Math.toRadians(-91));
+    private Pose2d finalShootingPos = new Pose2d(-34.4,-18, Math.toRadians(-100));
     //private Vector2d fina = new Vector2d(-35.4,-19);
     //private double secondShootingHeading = Math.toRadians(50);
 
@@ -267,7 +267,7 @@ public class ZeusBlueNearZoneV2_5_5Sorting extends LinearOpMode {
                         myRobot.shooterStop(),
                         //myRobot.intakePower(0),
                         myRobot.turnOffUpdate())));
-
+/*
         drive.updatePoseEstimate();
         RobotInfoStorage.autoEndPose = drive.localizer.getPose();
 
@@ -281,7 +281,7 @@ public class ZeusBlueNearZoneV2_5_5Sorting extends LinearOpMode {
                         myRobot.turnOffUpdate())));
 
 
-
+*/
 
 
 /*

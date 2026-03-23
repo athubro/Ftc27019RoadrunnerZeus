@@ -9,8 +9,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name = "ForbiddenTeleopBlue v1", group = "TeleOp")
-public class ForbiddenTeleopBlue extends LinearOpMode {
+@TeleOp(name = "ForbiddenTeleopRed v1", group = "TeleOp")
+public class ForbiddenTeleopRed extends LinearOpMode {
 
     public RobotInfoStorage info;
     public  MecanumDrive myDrive;
@@ -30,6 +30,7 @@ public class ForbiddenTeleopBlue extends LinearOpMode {
     private double manualTurretDegrees = 0;
 
     private double speedRatio = 0.75;
+    private double rotationSpeed = 0.5;
 
     @Override
     public void runOpMode() {
@@ -44,7 +45,7 @@ public class ForbiddenTeleopBlue extends LinearOpMode {
         rgbIndicator = hardwareMap.get(Servo.class, "rgbLight");
 
         // Configure turret
-        turret.PARAMS.TARGET_TAG_ID = 20;
+        turret.PARAMS.TARGET_TAG_ID = 24;
         turret.setAutoAngleEnabled(false);  // Start with manual angle control
         turret.setAutoRPMEnabled(false);    // Start with manual RPM control
         turret.setTrackingMode(false);      // Start with manual heading control
@@ -188,11 +189,11 @@ public class ForbiddenTeleopBlue extends LinearOpMode {
 
 
             // Enable/disable shooting with triggers
-           // if (true) {
+            if (gamepad2.right_trigger > 0.2) {
                 turret.setShootingEnabled(true);
-            //} else {
-            //    turret.setShootingEnabled(false);
-            //}
+            } else {
+                turret.setShootingEnabled(false);
+            }
 
             // Manual RPM adjustment (D-pad up/down)
             if (gamepad2.dpadUpWasPressed()) {
@@ -235,6 +236,8 @@ public class ForbiddenTeleopBlue extends LinearOpMode {
             if (gamepad1.right_trigger > 0.1) {
                 intake.setIntakePower(gamepad1.right_trigger);  // Intake
                 intake.closeGate();
+                speedRatio = 0.5;
+                rotationSpeed = 0.35;
                 if (intake.ballCount == 3) {
                     rgbIndicator.setPosition(0.47);
                 } else {
@@ -244,6 +247,8 @@ public class ForbiddenTeleopBlue extends LinearOpMode {
                 intake.setIntakePower(-gamepad2.left_trigger);  // Manual control
             } else {
                 intake.setIntakePower(0);  // Stop
+                speedRatio = 0.8;
+                rotationSpeed = 0.55;
             }
             if (gamepad1.left_trigger > 0.1) {
                 intake.setIntakePower(gamepad1.left_trigger);  // Intake
@@ -277,7 +282,7 @@ public class ForbiddenTeleopBlue extends LinearOpMode {
             if ((!gamepad1.rightBumperWasPressed()) ) {
                 if (!autoDrive) {
                     Vector2d translation = new Vector2d((speedRatio * (-gamepad1.left_stick_y)), (speedRatio * (-gamepad1.left_stick_x)));
-                    double rotation = -0.65 * gamepad1.right_stick_x;
+                    double rotation = -rotationSpeed * gamepad1.right_stick_x;
                     myDrive.setDrivePowers(new PoseVelocity2d(translation, rotation));
                 } else {
                     if (Math.abs(gamepad1.left_stick_y) > 0.01 || Math.abs(gamepad1.left_stick_x) > 0.01 || Math.abs(gamepad1.right_stick_x) > 0.01) {

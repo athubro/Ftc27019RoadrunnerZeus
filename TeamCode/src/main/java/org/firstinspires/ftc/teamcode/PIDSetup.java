@@ -18,10 +18,10 @@ public class PIDSetup extends LinearOpMode {
     private DcMotorEx rightMotor;
     private DcMotorEx intake;
 
-    public static double kP = 13.6;
+    public static double kP = 200;
     public static double kI = 0;
     public static double kD = 0.0;
-    public static double kF = 30.5;
+    public static double kF = 15;
 
     public static double targetRPM = 3150;
     public static double TICKS_PER_REV = 28.0;
@@ -36,7 +36,7 @@ public class PIDSetup extends LinearOpMode {
 
     private static final double UPDATE_DELAY = 0.1;   // seconds
     private static final double BASE_STEP = 0.001;
-    private static final double MAX_STEP = 0.05;
+    private static final double MAX_STEP = 0.5;
     private static final double GROWTH_RATE = 1.2;
 
     @Override
@@ -90,7 +90,7 @@ public class PIDSetup extends LinearOpMode {
 
                 boolean anyHeld =
                         gamepad1.dpad_up || gamepad1.dpad_down ||
-                                gamepad1.dpad_left || gamepad1.dpad_right;
+                                gamepad1.dpad_left || gamepad1.dpad_right || gamepad1.right_bumper|| gamepad1.left_bumper;
 
                 if (anyHeld) {
 
@@ -98,6 +98,9 @@ public class PIDSetup extends LinearOpMode {
                     if (gamepad1.dpad_down) kP -= step;
                     if (gamepad1.dpad_left) kF += step;
                     if (gamepad1.dpad_right) kF -= step;
+                    if (gamepad1.right_bumper) kI += step;
+                    if (gamepad1.left_bumper) kI -= step;
+
 
                     buttonTimer.reset();
                 } else {
@@ -109,7 +112,7 @@ public class PIDSetup extends LinearOpMode {
             if (gamepad1.aWasPressed()) targetRPM -= 50;
 
             if (gamepad2.left_trigger > 0.1) {
-                intake.setPower(gamepad2.left_trigger);
+                intake.setPower(gamepad1.left_trigger);
             } else {
                 intake.setPower(0);
             }
@@ -157,6 +160,7 @@ public class PIDSetup extends LinearOpMode {
                 packet.put("Right RPM", rightRPM);
                 packet.put("kP", kP);
                 packet.put("kF", kF);
+                packet.put("kI", kI);
                 packet.put("Recovery Time (s)", recoveryTime);
                 packet.put("Testing", isRecoveryTest);
                 dashboard.sendTelemetryPacket(packet);
@@ -166,6 +170,7 @@ public class PIDSetup extends LinearOpMode {
                 telemetry.addData("Right RPM", "%.1f", rightRPM);
                 telemetry.addData("kP", "%.5f", kP);
                 telemetry.addData("kF", "%.5f", kF);
+                telemetry.addData("kF", "%.5f", kI);
                 telemetry.addData("Recovery Time", "%.2f s", recoveryTime);
                 if (isRecoveryTest) {
                     telemetry.addLine(">> RECOVERY TEST RUNNING <<");

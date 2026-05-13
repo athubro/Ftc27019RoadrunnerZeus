@@ -124,7 +124,7 @@ public class ZeusBlueNearZoneV2_5 extends LinearOpMode {
         drive.updatePoseEstimate();
         RobotInfoStorage.autoEndPose = drive.localizer.getPose();
 
-        Actions.runBlocking(myRobot.turnOnUpdate());
+        Actions.runBlocking(new SequentialAction(myRobot.intakePower(0.2), myRobot.turnOnUpdate()));
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction(
                         myRobot.shooterSpinUp(),

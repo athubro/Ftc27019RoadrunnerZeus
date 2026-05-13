@@ -27,7 +27,7 @@ public class SSMyRobot  {
 
     public boolean doneShooting = true;
     public ElapsedTime generalTimer = new ElapsedTime();
-    public ElapsedTime intakeTime = new ElapsedTime();
+   // public ElapsedTime intakeTime = new ElapsedTime();
     private HardwareMap myHardwareMap;
     public boolean updateFlag = false;
     private double previousTime =0;
@@ -42,7 +42,8 @@ public class SSMyRobot  {
         myHardwareMap=hardwareMap;
         pose=newPos;
         generalTimer.reset();
-        intakeTime.reset();
+        // intakeTime.reset();
+        intake.resetIntakeTime();
         dashboard = FtcDashboard.getInstance();
 
     }
@@ -125,7 +126,7 @@ public class SSMyRobot  {
                 return false;
             }
             //intake.ballCount == 0 ||
-            if ( intakeTime.seconds() >1.2) {
+            if ( intake.pastIntakeTime) {
                 return false;
             } else {
                 return true;
@@ -267,6 +268,39 @@ public class SSMyRobot  {
         }
     }
 
+    public class TurnOnOdo implements Action {
+        double timeCap;
+
+        public TurnOnOdo () {
+            timeCap = 5;
+        }
+        public boolean run(@NonNull TelemetryPacket pack) {
+
+            turretSystem.setUseOdometryTracking(true);
+
+                return false;
+
+
+        }
+    }
+
+
+    public class TurnOffOdo implements Action {
+        double timeCap;
+
+        public TurnOffOdo () {
+            timeCap = 5;
+        }
+        public boolean run(@NonNull TelemetryPacket pack) {
+
+            turretSystem.setUseOdometryTracking(false);
+
+            return false;
+
+
+        }
+    }
+
 
     public class TurnOnTrackingOnly implements Action {
         double timeCap;
@@ -288,9 +322,45 @@ public class SSMyRobot  {
         return new TurnOnTracking();
     }
 
+    public Action turnOnOdo() {
+        return new TurnOnOdo();
+    }
+    public Action turnOffOdo() {
+        return new TurnOffOdo();
+    }
+
+
+
     public Action turnOnTrackingOnly() {
         return new TurnOnTrackingOnly();
     }
+
+
+
+    public class TurretLook implements Action {
+        double timeCap;
+
+        public TurretLook () {
+            timeCap = 5;
+        }
+        public boolean run(@NonNull TelemetryPacket pack) {
+
+            //turretSystem.setTrackingMode(true);
+            // turretSystem.aimingMode = true;
+            turretSystem.setShootingEnabled(true);
+            turretSystem.updateVisionTracking();
+            turretSystem.updateTurretAiming();
+            return false;
+
+
+        }
+    }
+    public Action turretLook() {
+        return new TurretLook();
+    }
+
+
+
 
 
     public class WaitForTracking implements Action{
@@ -420,7 +490,7 @@ public class SSMyRobot  {
             intake.storageUpdate();
 
             //intake.ballCount == 0 ||
-            if ( intakeTime.seconds() > 1.3) {
+            if (intake.pastIntakeTime) {
                 return false;
             } else {
                 return true;
@@ -435,7 +505,7 @@ public class SSMyRobot  {
 
     public class ResetIntakeTimer implements  Action{
         public boolean run(@NonNull TelemetryPacket pack){
-            intakeTime.reset();
+            intake.resetIntakeTime();
             return false;
 
         }
@@ -449,7 +519,7 @@ public class SSMyRobot  {
     public class WaitFullStorage implements  Action{
         public boolean run(@NonNull TelemetryPacket pack){
             intake.storageUpdate();
-            if (intake.ballCount == 3 || intakeTime.seconds() > 1.5) {
+            if (intake.ballCount == 3 || intake.pastIntakeTime) {
                 return false;
             } else {
                 return true;

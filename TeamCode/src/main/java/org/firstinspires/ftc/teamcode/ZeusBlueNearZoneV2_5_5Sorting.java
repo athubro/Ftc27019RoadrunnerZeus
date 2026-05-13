@@ -18,7 +18,7 @@ public class ZeusBlueNearZoneV2_5_5Sorting extends LinearOpMode {
     private RobotInfoStorage info;
     private Pose2d startPose = new Pose2d(-45.2766, -61.5312, Math.toRadians(-127.6875));
     private Pose2d firstShootingPos = new Pose2d(-15, -30, Math.toRadians(-115.56));
-    private Pose2d shotingPos = new Pose2d(-9.923, -25.695, Math.toRadians(-115.56));//(-32.66, -24.08, Math.toRadians(45));
+    private Pose2d shotingPos = new Pose2d(-11.5, -29, Math.toRadians(-117.56));//(-32.66, -24.08, Math.toRadians(45));
     private Pose2d firstSpikeStart = new Pose2d(-9.746, -34.06, Math.toRadians(-84.316));
     //private Pose2d firstSpikeLook = new Pose2d(-9.746, -34.06, Math.toRadians(170));
 
@@ -35,13 +35,13 @@ public class ZeusBlueNearZoneV2_5_5Sorting extends LinearOpMode {
     //with intake
     private Pose2d gateOpen = new Pose2d(2.05, -56.2, Math.toRadians(1));
 
-    private Pose2d thirdSpikeStart = new Pose2d(37.5592, -34.6989, Math.toRadians(-79.336));
+    private Pose2d thirdSpikeStart = new Pose2d(37.5592, -34, Math.toRadians(-79.336));
 
     private Pose2d thirdSpikeEnd = new Pose2d(39.354, -59.91, Math.toRadians(-90.622));
 
     private Pose2d thirdSpikeFurther = new Pose2d(39.148, -66.8586, Math.toRadians(-91.583));
     private Pose2d park = new Pose2d(0.366, -48.9, Math.toRadians(-0.305));
-    private Pose2d finalShootingPos = new Pose2d(-34.4,-18, Math.toRadians(-100));
+    private Pose2d finalShootingPos = new Pose2d(-35.4,-12, Math.toRadians(-100));
     //private Vector2d fina = new Vector2d(-35.4,-19);
     //private double secondShootingHeading = Math.toRadians(50);
 
@@ -103,6 +103,7 @@ public class ZeusBlueNearZoneV2_5_5Sorting extends LinearOpMode {
                                 myRobot.closeGate(),
                                 myRobot.turnOffTracking(),
                                 myRobot.shooterStop(),
+                                //myRobot.setTurretAnlge(-12),
                                 myRobot.turnOffUpdate()),
                         drive.actionBuilder(startPose)
                                 .strafeToLinearHeading(firstShootingPos.position,firstShootingPos.heading,new TranslationalVelConstraint(25)).build()
@@ -121,9 +122,12 @@ public class ZeusBlueNearZoneV2_5_5Sorting extends LinearOpMode {
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose()).
-                        strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading).strafeToLinearHeading(secondSpikeEnd.position,secondSpikeEnd.heading,new TranslationalVelConstraint(70)).strafeToLinearHeading(gateOpen.position,gateOpen.heading).waitSeconds(0.3).strafeToLinearHeading(secondSpikeLook.position,secondSpikeLook.heading).build(),
+                        strafeToLinearHeading(secondSpikeStart.position,secondSpikeStart.heading).
+                        strafeToLinearHeading(secondSpikeEnd.position,secondSpikeEnd.heading,new TranslationalVelConstraint(70)).
+                        strafeToLinearHeading(gateOpen.position,gateOpen.heading).waitSeconds(0.3).
+                        strafeToLinearHeading(secondSpikeLook.position,secondSpikeLook.heading).build(),
                         myRobot.detectMotiff(),
-                        myRobot.intakePower(0.5),//, new TranslationalVelConstraint(10)
+                        myRobot.intakePower(0.1),//, new TranslationalVelConstraint(10)
                         myRobot.storeBalls(turretSystem.motiff),
                         myRobot.turnOffUpdate())));
 

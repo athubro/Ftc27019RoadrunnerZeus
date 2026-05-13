@@ -25,10 +25,10 @@ public final class Turret {
     // ==================== PARAMETERS ====================
     public class Params {
         public static final double PID_INTERVAL = 0.1; // Flywheel PID
-        public double kP = 65.0;//60, 15.929
+        public double kP =200.0;//60, 15.929    ===========  99?
         public double kI = 0.0;
         public double kD = 0.0;
-        public double kF = 14.0; // Flywheel motor
+        public double kF = 15.0; // Flywheel motor =========== 15?
         public static final double TICKS_PER_REV = 28.0;
         public double toleranceRPM = 350.0; // Vision
         public int TARGET_TAG_ID = 20;
@@ -37,14 +37,14 @@ public final class Turret {
         public static final double TURRET_POSITION_TOLERANCE_DEG = 1.4; // Position tolerance in degrees
         // Turret motor PIDF coefficients (for built-in position controller)
         // Lower P reduces oscillation, higher D adds damping
-        public double turretKP = 4; // Proportional gain (default is often 10)
-        public double turretKI = 0.0; // Integral gain
-        public double turretKD = 0.0; // Derivative gain (adds damping)
-        public double turretKF = 50.0; // Feedforward gain
+        public double turretKP = 10.0; // Proportional gain (default is often 10)
+        public double turretKI = 0.25; // Integral gain
+        public double turretKD = 6.0; // Derivative gain (adds damping)
+        public double turretKF = 0.0; // Feedforward gain
         // Gear ratio
         public static final double SMALL_GEAR_TEETH = 39.0;
         public static final double BIG_GEAR_TEETH = 160.0;
-        public static final double TICKS_PER_SMALL_REV = 285.0;
+        public static final double TICKS_PER_SMALL_REV = 540.0;   //285.0 for hex motor
         public static final double GEAR_RATIO = BIG_GEAR_TEETH / SMALL_GEAR_TEETH;
         public static final double BIG_GEAR_DEG_PER_SMALL_REV = 360.0 / GEAR_RATIO;
         public static final double TICKS_PER_BIG_GEAR_DEGREE = TICKS_PER_SMALL_REV / BIG_GEAR_DEG_PER_SMALL_REV;
@@ -73,8 +73,8 @@ public final class Turret {
     public boolean fineAdjustmentFlag=false;
     // ==================== DISTANCE MEASUREMENT ====================
     public final double ATHeight = 29.5;
-    public final double LimelightHeight = 13.5;
-    public final double LimelightAngle = 13.6;
+    public final double LimelightHeight = 15.5;
+    public final double LimelightAngle = 20.8;
     public double disToAprilTag = 0;
     public double ATAngle = 0;
     public boolean tagFound = false;
@@ -112,7 +112,7 @@ public final class Turret {
 
     public double TurretDesiredDeg=0;
     public boolean useOdometryTracking = false;
-    public  Vector2d targetPos = new Vector2d(-53, -60); // Turret target position (in ticks)
+    public  Vector2d targetPos = new Vector2d(-58, -65); // Turret target position (in ticks)
     public int turretTargetPosition = 0;
     public double previousDesiredDeg=0;
     // Motiff detection (added back from old code)
@@ -494,7 +494,7 @@ public final class Turret {
         Vector2d robotPos = pose.position;
         double robotHeading = pose.heading.toDouble();
         Vector2d toTarget = targetPos.minus(robotPos);
-        disToAprilTag = toTarget.norm();
+        disToAprilTag = toTarget.norm()-10;
         double absAngleToTarget = Math.atan2(toTarget.y, toTarget.x);
         double relativeAngleRad = absAngleToTarget - robotHeading;
         double relativeAngleDeg = Math.toDegrees(relativeAngleRad);
@@ -520,7 +520,7 @@ public final class Turret {
 
 
         if (!tagFound) {
-            //turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
+            turretMotor.setTargetPosition(turretMotor.getCurrentPosition()); //?/
             turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
             if (!useOdometryTracking){
                 previousDesiredDeg=200;
@@ -547,8 +547,9 @@ public final class Turret {
         // Check if aligned
         if (Math.abs(errorDeg) < PARAMS.TURRET_POSITION_TOLERANCE_DEG) {
             hasAligned = true;
-            //turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
-            //return;
+            turretMotor.setTargetPosition(turretMotor.getCurrentPosition());//?/
+            turretMotor.setPower(0);//?/
+            //return;//?/
         } else{
             hasAligned = false;
         }
@@ -559,7 +560,7 @@ public final class Turret {
             fineAdjustingTimer=timer.seconds();
             return;
         }else{
-            //turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
+            
             turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
         }
 
@@ -585,12 +586,14 @@ public final class Turret {
             if (Math.abs(desiredDeg-previousDesiredDeg)>5){
                 turretTargetPosition = (int)(desiredDeg * PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
                 turretMotor.setTargetPosition(turretTargetPosition);
+                turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);//?/
                 previousDesiredDeg=desiredDeg;
             }
         } else{
             if (Math.abs(desiredDeg-previousDesiredDeg)>PARAMS.TURRET_POSITION_TOLERANCE_DEG) {
                 turretTargetPosition = (int) (desiredDeg * PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
                 turretMotor.setTargetPosition(turretTargetPosition);
+                turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);//?/
                 previousDesiredDeg = desiredDeg;
             }
         }
@@ -602,6 +605,10 @@ public final class Turret {
     public void measureDistance() {
         if (tagFound) {
             disToAprilTag = (ATHeight - LimelightHeight) / Math.tan((ATAngle + LimelightAngle) * (Math.PI / 180));
+            //57 = 14/math.tan(-7+x)*(pi/180)
+            //math.tan(-7+x)*(pi/180) = 14/57
+            //
+
         }
     }
     public void fineAdjustment(){
@@ -635,10 +642,10 @@ public final class Turret {
 
             if (x<95) {
                // targetRPM = 11.6 * x + 1650 - velocityCorFactor * velocityTowardGoal;
-                targetRPM = 10.4 * x + 1875 - velocityCorFactor * velocityTowardGoal;
+                targetRPM = 10.4 * x + 1900 - velocityCorFactor * velocityTowardGoal;
             } else {
               //  targetRPM = 11.6 * x + 1720 - velocityCorFactor * velocityTowardGoal;
-                targetRPM = 10.4 * x + 1900 - velocityCorFactor * velocityTowardGoal;
+                targetRPM = 10.4 * x + 2060 - velocityCorFactor * velocityTowardGoal;
 
             }
 

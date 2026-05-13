@@ -22,6 +22,13 @@ public class ForbiddenTeleopBlue extends LinearOpMode {
     private ElapsedTime sortTimer = new ElapsedTime();
     private Pose2d targetPose = new Pose2d(0, 0, 0);
 
+    private Pose2d gatePos = new Pose2d(20.5, -66.5, Math.toRadians(-125.9));
+
+    private Pose2d shootingPos = new Pose2d(-10.846, -25.85, Math.toRadians(-134));
+
+    private Pose2d loadingZone = new Pose2d(43.67, 35, Math.toRadians(63));
+
+
     private Servo rgbIndicator;
 
     public String[] motiff = {"P", "P", "G"};
@@ -274,16 +281,34 @@ public class ForbiddenTeleopBlue extends LinearOpMode {
             // UPDATE ALL SYSTEMS
             // =========================
                     //==========================================================================================
-            if ((!gamepad1.rightBumperWasPressed()) ) {
+            if ((!gamepad1.aWasPressed()) && (!gamepad1.rightBumperWasPressed()) && (!gamepad1.leftBumperWasPressed()) && (!gamepad1.yWasPressed())) {
                 if (!autoDrive) {
                     Vector2d translation = new Vector2d((speedRatio * (-gamepad1.left_stick_y)), (speedRatio * (-gamepad1.left_stick_x)));
-                    double rotation = -0.65 * gamepad1.right_stick_x;
+                    double rotation = -0.6 * gamepad1.right_stick_x;
                     myDrive.setDrivePowers(new PoseVelocity2d(translation, rotation));
                 } else {
                     if (Math.abs(gamepad1.left_stick_y) > 0.01 || Math.abs(gamepad1.left_stick_x) > 0.01 || Math.abs(gamepad1.right_stick_x) > 0.01) {
-                        autoDrive =false;
+                        autoDrive = false;
                     }
                 }
+            }else if (gamepad1.right_bumper) {
+                autoDrive = true;
+
+                Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose())
+                        .strafeToLinearHeading(shootingPos.position, shootingPos.heading).build());
+            }else if (gamepad1.left_bumper) {
+
+                autoDrive = true;
+
+                Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose())
+                        .strafeToLinearHeading(gatePos.position, gatePos.heading).build());
+            } else if (gamepad1.y){
+                autoDrive = true;
+
+                Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose())
+                        .strafeToLinearHeading(loadingZone.position, loadingZone.heading).build());
+
+
             } else {
                 //hmmmmmm
                 //Pose2d curPose2D = drive.localizer.getPose();
@@ -296,6 +321,8 @@ public class ForbiddenTeleopBlue extends LinearOpMode {
                         .strafeToLinearHeading(targetPose.position, targetPose.heading).build());
                 // }
             }
+
+
             if (gamepad1.xWasPressed())  {
                 autoDrive = false;
             }

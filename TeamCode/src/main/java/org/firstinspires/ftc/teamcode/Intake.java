@@ -26,6 +26,9 @@ import java.util.Arrays;
 public final class Intake {
     //==================== TIMER =============
     private ElapsedTime generalTimer = new ElapsedTime();
+    public ElapsedTime intakeTime = new ElapsedTime();
+
+    public boolean pastIntakeTime = false;
 
     //==================== SORTING ===========
 
@@ -51,17 +54,17 @@ public final class Intake {
     double frontColorHueLowerBound = -20;
     double frontColorDis = 3.2;
     //-----------middle sensor ------------
-    double middleColorHuePurpleBall = 176;
+    double middleColorHuePurpleBall = 185;
     double middleColorHueGreenBall = 152;
 
     double middleColorHueUpperBound = 15;
     double middleColorHueLowerBound = -15;
-    double middleColorDis = 12;
+    double middleColorDis = 13;
     //------------- back sensor -------------
-    double backColorHuePurpleBall = 205;
+    double backColorHuePurpleBall = 209;
     double backColorHueGreenBall = 160;
-    double backColorHueUpperBound = 10;
-    double backColorHueLowerBound = -10;
+    double backColorHueUpperBound = 13;
+    double backColorHueLowerBound = -13;
     double backColorDis = 5.5;//5.5->4.6->4
 
 
@@ -164,6 +167,12 @@ public final class Intake {
         storage[1] = detectColor(middleDis,middleHue, "middle");
         storage[0] = detectColor(backDis, backHue, "back");
         countBalls();
+        if (intakeTime.seconds() > 1.3) {
+            pastIntakeTime = true;
+
+        } else {
+            pastIntakeTime = false;
+        }
 
         //telemetry.addData("storage",storage);
         // telemetry.update();
@@ -248,6 +257,10 @@ public final class Intake {
         topCompartment.setPosition(0);
     }
 
+
+    public void resetIntakeTime() {
+        intakeTime.reset();
+    }
     private String detectColor (double dis, double hue, String slot) {
         double disCheck = 10;
         double hueCheckPurpleBall = 150;

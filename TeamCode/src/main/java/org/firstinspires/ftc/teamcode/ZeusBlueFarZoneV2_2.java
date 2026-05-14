@@ -9,8 +9,8 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-@Autonomous(name = "ZeusBlueFarZoneV2.1notrack", group = "Autonomous")
-public class ZeusBlueFarZoneV2_1 extends LinearOpMode {
+@Autonomous(name = "ZeusBlueFarZoneV2.2nomove", group = "Autonomous")
+public class ZeusBlueFarZoneV2_2 extends LinearOpMode {
 
     private Turret turretSystem;
     private MecanumDrive drive;
@@ -134,12 +134,13 @@ public class ZeusBlueFarZoneV2_1 extends LinearOpMode {
                         drive.actionBuilder(drive.localizer.getPose())
                                 .strafeToLinearHeading(shotingPos.position,shotingPos.heading)
                                 .build(),
-                       // myRobot.turretLook(),
+                       myRobot.waitStopMoving(),
+                        myRobot.turretLook(),
 
                         myRobot.shooterSpinUp(),
 
                         myRobot.waitSpinUp(),
-                        myRobot.turretLook(),
+                       // myRobot.turretLook(),
                         myRobot.openGate(),
                       //  drive.actionBuilder(drive.localizer.getPose())
                         //.turn(Math.toRadians(-turretSystem.errorDeg))
@@ -181,12 +182,13 @@ public class ZeusBlueFarZoneV2_1 extends LinearOpMode {
                         .strafeToLinearHeading(shotingPos.position,shotingPos.heading)
 
                         .build(),
-                        //myRobot.turretLook(),
+                        myRobot.waitStopMoving(),
+
+                        myRobot.turretLook(),
 
 
                         myRobot.shooterSpinUp(),
                         myRobot.waitSpinUp(),
-                        myRobot.turretLook(),
                         myRobot.openGate(),
                         myRobot.intakePower(1),
                         myRobot.resetIntakeTimer(),
@@ -222,11 +224,12 @@ public class ZeusBlueFarZoneV2_1 extends LinearOpMode {
 
                         .strafeToLinearHeading(shotingPos.position,shotingPos.heading)
                         .build(),
-                        //myRobot.turretLook(),
+                        myRobot.waitStopMoving(),
+
+                        myRobot.turretLook(),
 
                         myRobot.shooterSpinUp(),
                         myRobot.waitSpinUp(),
-                        myRobot.turretLook(),
                         myRobot.openGate(),
                         myRobot.intakePower(1),
                         myRobot.resetIntakeTimer(),

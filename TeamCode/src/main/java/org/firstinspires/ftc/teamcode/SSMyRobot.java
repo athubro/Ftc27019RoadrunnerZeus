@@ -773,6 +773,22 @@ public class SSMyRobot  {
         return new TrackingPRM();
 
     }
+
+    public class WaitStopMoving implements Action {
+        public boolean run(@NonNull TelemetryPacket pack) {
+            if (drive.localizer.update().linearVel.x < 1 && drive.localizer.update().linearVel.y < 1 && drive.localizer.update().angVel < 2) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+    }
+
+    public Action waitStopMoving() {
+        return new WaitStopMoving();
+    }
+
+
     public class ShooterSpinUp implements Action {
         public boolean run(@NonNull TelemetryPacket pack) {
             turretSystem.shootingEnabled = true;

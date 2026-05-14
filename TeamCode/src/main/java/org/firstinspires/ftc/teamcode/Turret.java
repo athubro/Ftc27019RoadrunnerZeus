@@ -590,7 +590,7 @@ public final class Turret {
                 previousDesiredDeg=desiredDeg;
             }
         } else{
-            if (Math.abs(desiredDeg-previousDesiredDeg)>PARAMS.TURRET_POSITION_TOLERANCE_DEG) {
+            if (Math.abs(desiredDeg-previousDesiredDeg)>3) {
                 turretTargetPosition = (int) (desiredDeg * PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
                 turretMotor.setTargetPosition(turretTargetPosition);
                 turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);//?/
@@ -645,7 +645,7 @@ public final class Turret {
                 targetRPM = 10.4 * x + 1900 - velocityCorFactor * velocityTowardGoal;
             } else {
               //  targetRPM = 11.6 * x + 1720 - velocityCorFactor * velocityTowardGoal;
-                targetRPM = 10.4 * x + 2060 - velocityCorFactor * velocityTowardGoal;
+                targetRPM = 10.4 * x + 2100 - velocityCorFactor * velocityTowardGoal;
 
             }
 

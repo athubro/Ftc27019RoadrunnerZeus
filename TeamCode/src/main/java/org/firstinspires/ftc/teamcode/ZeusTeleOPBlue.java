@@ -39,7 +39,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
 
     private double manualTurretDegrees = 0;
 
-    private double speedRatio = 0.75;
+    private double speedRatio = 0.8;
 
     @Override
     public void runOpMode() {
@@ -227,7 +227,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
 
 
             if (!turret.trackingMode) {
-                manualTurretDegrees+= -gamepad2.right_stick_x*2;
+                manualTurretDegrees+= -gamepad2.right_stick_x*5;
                 manualTurretDegrees = turret.clamper(manualTurretDegrees, turret.PARAMS.TURRET_MIN_DEG, turret.PARAMS.TURRET_MAX_DEG);
                 turret.manualTurretAngle(manualTurretDegrees);
             } else {
@@ -245,6 +245,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
             if (gamepad1.right_trigger > 0.1) {
                 intake.setIntakePower(gamepad1.right_trigger);  // Intake
                 intake.closeGate();
+                speedRatio = 0.3;
                 if (intake.ballCount == 3) {
                     rgbIndicator.setPosition(0.47);
                 } else {
@@ -254,6 +255,7 @@ public class ZeusTeleOPBlue extends LinearOpMode {
                 intake.setIntakePower(-gamepad1.left_trigger);  // Manual control
             } else {
                 intake.setIntakePower(0);  // Stop
+                speedRatio=0.8;
             }
             if (gamepad2.left_trigger > 0.1) {
                 intake.setIntakePower(gamepad2.left_trigger);  // Intake

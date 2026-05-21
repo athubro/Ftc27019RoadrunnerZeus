@@ -224,7 +224,7 @@ public class ZeusTeleOPRedV1 extends LinearOpMode {
 
 
             if (!turret.trackingMode) {
-                manualTurretDegrees+= -gamepad2.right_stick_x*2;
+                manualTurretDegrees+= -gamepad2.right_stick_x*5;
                 manualTurretDegrees = turret.clamper(manualTurretDegrees, turret.PARAMS.TURRET_MIN_DEG, turret.PARAMS.TURRET_MAX_DEG);
                 turret.manualTurretAngle(manualTurretDegrees);
             } else {

@@ -79,7 +79,7 @@ public final class Turret {
     public double ATAngle = 0;
     public boolean tagFound = false;
     //change with alliance and april tag
-    public double LLFarZoneOffset = 2;
+    public double LLFarZoneOffset = 3;
     public double velocityCorFactor= 7;
     public double angleCorrFactor =0.5;
 
@@ -367,6 +367,9 @@ public final class Turret {
     }
 
     public void update(double forwardInput, double strafeInput, double rotationInput) {
+        if (Math.abs(turretMotor.getCurrentPosition()-turretTargetPosition)<20){
+            turretMotor.setPower(0);
+        }
         if (useOdometryTracking) {
             updateOdomTracking();
         } else {
@@ -468,7 +471,7 @@ public final class Turret {
                     errorAngleDeg = fid.getTargetXDegrees();
                     measureDistance();
                     //????????================================================================================
-                    if (disToAprilTag > 100) {
+                    if (disToAprilTag > 95) {
                         targetAngle = LLFarZoneOffset;
                     } else {
                         targetAngle = 0;
@@ -545,7 +548,7 @@ public final class Turret {
         // Low-pass filter for smooth response
         smoothedErrorDeg = 0.75 * smoothedErrorDeg + 0.25 * errorDeg;
         // Check if aligned
-        if (Math.abs(errorDeg) < PARAMS.TURRET_POSITION_TOLERANCE_DEG) {
+        if (Math.abs(errorDeg) < PARAMS.TURRET_POSITION_TOLERANCE_DEG*2) {
             hasAligned = true;
             turretMotor.setTargetPosition(turretMotor.getCurrentPosition());//?/
             turretMotor.setPower(0);//?/
@@ -645,7 +648,7 @@ public final class Turret {
                 targetRPM = 10.4 * x + 1900 - velocityCorFactor * velocityTowardGoal;
             } else {
               //  targetRPM = 11.6 * x + 1720 - velocityCorFactor * velocityTowardGoal;
-                targetRPM = 10.4 * x + 2100 - velocityCorFactor * velocityTowardGoal;
+                targetRPM = 10.4 * x + 1900 - velocityCorFactor * velocityTowardGoal;
 
             }
 
@@ -662,8 +665,8 @@ public final class Turret {
                 //shooterAngleSetting = 1.76*0.001*x-0.0829;
                 shooterAngleSetting = -1.25 + 0.0681*x - 0.000781*x*x + 0.00000293*x*x*x;
             } else {
-               // shooterAngleSetting = 0.75;
-                shooterAngleSetting = -1.25 + 0.0681*x - 0.000781*x*x + 0.00000293*x*x*x;
+                shooterAngleSetting = 0.9;
+               // shooterAngleSetting = -1.25 + 0.0681*x - 0.000781*x*x + 0.00000293*x*x*x;
 
             }
             turretAnglePos = clamper(shooterAngleSetting, 0.0, 1.0);

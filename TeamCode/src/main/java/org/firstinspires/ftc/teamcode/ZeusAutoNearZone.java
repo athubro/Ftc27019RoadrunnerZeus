@@ -12,7 +12,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 @Autonomous(name = "ZeusAutoNearZone", group = "Blue Near")
 public class ZeusAutoNearZone extends LinearOpMode {
 
-    private NewRobot robot;
+   // private NewRobot robot;
 
     // ─── POSES (same as your old auto) ──────────────────────────────────────
     private final Pose2d startPose      = new Pose2d(-46.74, -51.76, Math.toRadians(-37.9));
@@ -33,7 +33,7 @@ public class ZeusAutoNearZone extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-
+/*
         MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);  // your drive class
         robot = new NewRobot(hardwareMap, drive, startPose);
 
@@ -176,5 +176,7 @@ public class ZeusAutoNearZone extends LinearOpMode {
             telemetry.addData("Storage", String.join(" ", robot.intake.storage));
             telemetry.update();
         }
+
+        */
     }
 }

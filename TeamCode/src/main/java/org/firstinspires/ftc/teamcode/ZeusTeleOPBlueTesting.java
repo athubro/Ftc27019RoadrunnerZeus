@@ -8,10 +8,12 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 @TeleOp(name = "ZeusTeleOPBlueTesting", group = "TeleOp")
 public class ZeusTeleOPBlueTesting extends LinearOpMode {
-
+    public  MecanumDrive myDrive;
     private Turret turret;
     private Intake intake;
     private Pose2d initialPose = new Pose2d(0, 0, 0);
+
+    private double manualTurretDegrees = 0;
 
     private double speedRatio = 0.75;
 
@@ -19,8 +21,8 @@ public class ZeusTeleOPBlueTesting extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-
-        turret = new Turret(hardwareMap, telemetry, initialPose);
+        myDrive= new MecanumDrive(hardwareMap, initialPose);
+        turret = new Turret(hardwareMap, myDrive, telemetry, initialPose);
         intake = new Intake(hardwareMap, telemetry);
 
         turret.PARAMS.TARGET_TAG_ID = 20;
@@ -90,16 +92,20 @@ public class ZeusTeleOPBlueTesting extends LinearOpMode {
                 turret.setTargetRPM(Math.max(0, turret.getTargetRPM() - 50.0));
             }
             if (gamepad1.dpadUpWasPressed()) {
-                turret.PARAMS.turretKF += 1;
+                turret.PARAMS.kP += 0.1;
+                turret.setFlywheelPID();
             }
             if (gamepad1.dpadDownWasPressed()) {
-                turret.PARAMS.turretKF -= 1;
+                turret.PARAMS.kP -= 0.1;
+                turret.setFlywheelPID();
             }
             if (gamepad1.dpadRightWasPressed()) {
-                turret.PARAMS.turretKD += 1;
+                turret.PARAMS.kF += 0.1;
+                turret.setFlywheelPID();
             }
             if (gamepad1.dpadLeftWasPressed()) {
-                turret.PARAMS.turretKD -= 1;
+                turret.PARAMS.kF -= 0.1;
+                turret.setFlywheelPID();
             }
 
             // Manual turret angle (up/down) - D-pad left/right
@@ -110,6 +116,21 @@ public class ZeusTeleOPBlueTesting extends LinearOpMode {
             } else {
                 turret.setTurretAngleCommand(0);
             }
+
+            if (!turret.trackingMode) {
+                manualTurretDegrees+= gamepad2.right_stick_x;
+                manualTurretDegrees = turret.clamper(manualTurretDegrees, turret.PARAMS.TURRET_MIN_DEG, turret.PARAMS.TURRET_MAX_DEG);
+                turret.manualTurretAngle(manualTurretDegrees);
+            } else {
+                if (turret.tagFound&&!usingOdomTracking) {
+                    turret.shootingEnabled = true;
+                }
+            }
+
+
+         //   if ((turret.errorAngleDeg-turret.targetAngle) < turret.targetAngle + 3  && (turret.errorAngleDeg-turret.targetAngle) > turret.targetAngle - 3) {
+         //       turret.shootingEnabled = true;
+         //   }
 
             // =========================
             // GAMEPAD 2: INTAKE CONTROLS
@@ -123,13 +144,16 @@ public class ZeusTeleOPBlueTesting extends LinearOpMode {
                 intake.setIntakePower(1.0);
             } else if (gamepad2.left_trigger > 0.1) {
                 intake.setIntakePower(gamepad2.left_trigger);
+                intake.openGate();
             } else if (Math.abs(gamepad2.left_stick_y) > 0.1) {
                 intake.setIntakePower(gamepad2.left_stick_y);
             } else {
                 intake.setIntakePower(0);
             }
 
-
+            manualTurretDegrees+= -gamepad2.right_stick_x*2;
+            manualTurretDegrees = turret.clamper(manualTurretDegrees, turret.PARAMS.TURRET_MIN_DEG, turret.PARAMS.TURRET_MAX_DEG);
+            turret.manualTurretAngle(manualTurretDegrees);
 
             // =========================
             // UPDATE ALL SYSTEMS
@@ -140,6 +164,8 @@ public class ZeusTeleOPBlueTesting extends LinearOpMode {
             // =========================
             // TELEMETRY
             // =========================
+            telemetry.addData("kP", turret.PARAMS.kP);
+            telemetry.addData("kF", turret.PARAMS.kF);
 
             telemetry.addLine("=== DRIVE ===");
             telemetry.addData("Speed Mode", speedRatio == 1.0 ? "FAST" : (speedRatio == 0.3 ? "SLOW" : "NORMAL"));

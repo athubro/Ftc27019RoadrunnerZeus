@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -25,6 +26,9 @@ import java.util.Arrays;
 public final class Intake {
     //==================== TIMER =============
     private ElapsedTime generalTimer = new ElapsedTime();
+    public ElapsedTime intakeTime = new ElapsedTime();
+
+    public boolean pastIntakeTime = false;
 
     //==================== SORTING ===========
 
@@ -40,26 +44,28 @@ public final class Intake {
     String firstStep = "N";
     String secondStep = "N";
 
+    public static Pose2d autoPose = new Pose2d(0,0,0);
+
 
     //---------------front sensor -----------------
-    double frontColorHuePurpleBall = 227;
+    double frontColorHuePurpleBall = 210;
     double frontColorHueGreenBall = 158;
     double frontColorHueUpperBound = 20;
     double frontColorHueLowerBound = -20;
     double frontColorDis = 3.2;
     //-----------middle sensor ------------
-    double middleColorHuePurpleBall = 176;
+    double middleColorHuePurpleBall = 185;
     double middleColorHueGreenBall = 152;
 
     double middleColorHueUpperBound = 15;
     double middleColorHueLowerBound = -15;
-    double middleColorDis = 12;
+    double middleColorDis = 13;
     //------------- back sensor -------------
-    double backColorHuePurpleBall = 200;
+    double backColorHuePurpleBall = 209;
     double backColorHueGreenBall = 160;
-    double backColorHueUpperBound = 10;
-    double backColorHueLowerBound = -10;
-    double backColorDis = 5.5;
+    double backColorHueUpperBound = 13;
+    double backColorHueLowerBound = -13;
+    double backColorDis = 5.5;//5.5->4.6->4
 
 
 
@@ -161,11 +167,20 @@ public final class Intake {
         storage[1] = detectColor(middleDis,middleHue, "middle");
         storage[0] = detectColor(backDis, backHue, "back");
         countBalls();
+        if (intakeTime.seconds() > 1.3) {
+            pastIntakeTime = true;
+
+        } else {
+            pastIntakeTime = false;
+        }
 
         //telemetry.addData("storage",storage);
         // telemetry.update();
     }
 
+    public void generalTimerReset() {
+        generalTimer.reset();
+    }
 
     public void countBalls() {
         ballCount=0;
@@ -242,6 +257,10 @@ public final class Intake {
         topCompartment.setPosition(0);
     }
 
+
+    public void resetIntakeTime() {
+        intakeTime.reset();
+    }
     private String detectColor (double dis, double hue, String slot) {
         double disCheck = 10;
         double hueCheckPurpleBall = 150;
@@ -285,10 +304,12 @@ public final class Intake {
     }
     public void storeBalls (String[] target) {
         String[] output = {"N", "N", "N"};
+        finishedStoring = false;
         //to shoot (first ball to shoot);
         String firstBall = "N";
         if (!ballsStored) {
-            if ((storage[0].equals(storage[1]) && storage[0].equals(storage[2]))) {
+            //  if ((storage[0].equals(storage[1]) && storage[0].equals(storage[2]))) {
+            if ((storage[0].equals(storage[1]) && storage[0].equals(storage[2])) || Arrays.equals(storage, target)) {
                 firstStep = "N";
                 secondStep = "N";
                 ballsStored = false;
@@ -375,6 +396,9 @@ public final class Intake {
 
             }
             firstStep = "N";
+            if (secondStep.equals("N")) {
+                ballsStored = false;
+            }
         } else {
             if (!secondStep.equals("N")) {
                 if (secondStep.equals("T")) {

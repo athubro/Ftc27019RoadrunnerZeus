@@ -6,12 +6,11 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name = "ZeusTeleOPBlue practice (v1)", group = "TeleOp")
-public class ZeusTeleOPBluePractices extends LinearOpMode {
+@TeleOp(name = "Zeus Blue practice (v2 NearZone)", group = "TeleOp")
+public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
 
     public RobotInfoStorage info;
     public  MecanumDrive myDrive;
@@ -69,7 +68,8 @@ public class ZeusTeleOPBluePractices extends LinearOpMode {
         telemetry.addData("Turret Position", turret.turretMotor.getCurrentPosition());
        // sleep(3000);
         turret.updateTurretPID();
-        turret.continuousTracking=false;
+        turret.updateTurretVelocity(400);
+        turret.continuousTracking=true;
         waitForStart();
 
         // Button state trackers for toggles

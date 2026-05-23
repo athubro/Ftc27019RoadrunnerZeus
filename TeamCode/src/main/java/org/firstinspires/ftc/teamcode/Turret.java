@@ -12,10 +12,12 @@ import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
 /**
  * Turret subsystem - with moveable turret base for aiming
@@ -34,13 +36,14 @@ public final class Turret {
         public int TARGET_TAG_ID = 20;
         public static final double TOLERANCE_DEG = 4.0; // Turret motor settings for RUN_TO_POSITION
         public static final double TURRET_MOTOR_POWER = 1; // Power for RUN_TO_POSITION mode
-        public static final double TURRET_POSITION_TOLERANCE_DEG = 1.4; // Position tolerance in degrees
+        public static final double TURRET_POSITION_TOLERANCE_DEG = 2; // Position tolerance in degrees
         // Turret motor PIDF coefficients (for built-in position controller)
         // Lower P reduces oscillation, higher D adds damping
         public double turretKP = 10.0; // Proportional gain (default is often 10)
-        public double turretKI = 0.25; // Integral gain
-        public double turretKD = 6.0; // Derivative gain (adds damping)
-        public double turretKF = 0.0; // Feedforward gain
+        public double turretKI = 0; // Integral gain
+        public double turretKD = 0; // Derivative gain (adds damping)
+        public double turretKF = 20; // Feedforward gain
+        public double turretVelocity =700; // TurretMotor's max speed
         // Gear ratio
         public static final double SMALL_GEAR_TEETH = 39.0;
         public static final double BIG_GEAR_TEETH = 160.0;
@@ -104,6 +107,7 @@ public final class Turret {
     public boolean shootingEnabled = false;
     public boolean autoRPMEnabled = false;
     public boolean trackingMode = false;
+    public boolean oneTimeAdjust =true;
     public boolean continuousTracking = true;
     public double errorAngleDeg = 0.0;
     public double smoothedErrorDeg = 0.0;
@@ -142,16 +146,30 @@ public final class Turret {
         PARAMS.kF = -0.702 * batteryVoltage + 24.3;
         leftFlywheel.setVelocityPIDFCoefficients(PARAMS.kP, PARAMS.kI, PARAMS.kD, PARAMS.kF);
         rightFlywheel.setVelocityPIDFCoefficients(PARAMS.kP, PARAMS.kI, PARAMS.kD, PARAMS.kF);
-
-        turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        //turretMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        //turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         // Set PIDF coefficients to reduce oscillation
-        turretMotor.setPositionPIDFCoefficients(PARAMS.turretKP);
-        // Note: setVelocityPIDFCoefficients can also be set if needed for smoother motion
-        // turretMotor.setVelocityPIDFCoefficients(PARAMS.turretKP, PARAMS.turretKI, PARAMS.turretKD, PARAMS.turretKF);
+
+
+        //turretMotor.setPositionPIDFCoefficients(PARAMS.turretKP);
+
         // Set initial target position (current position after reset = 0)
+        //turretMotor.setTargetPosition(0);
+        turretMotor.resetDeviceConfigurationForOpMode();
+        //turret.set
+        //turret.setTargetPosition(turret.getCurrentPosition());
+        turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         turretMotor.setTargetPosition(0);
         turretMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
+        PIDFCoefficients pidTurret0 = new PIDFCoefficients(10, 0, 0, 10);
+        turretMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidTurret0);
+        turretMotor.setVelocity(100);
+        turretMotor.setTargetPosition(0);
+        //PIDFCoefficients pidTurret = new PIDFCoefficients(PARAMS.turretKP, PARAMS.turretKI, PARAMS.turretKD, PARAMS.turretKF);
+        //turretMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidTurret);
+        //turretMotor.setVelocity(PARAMS.turretVelocity);
+        //
+        //turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
         turretAngle.setPosition(turretAnglePos);
         limelight.setPollRateHz(100);
         limelight.start();
@@ -209,6 +227,7 @@ public final class Turret {
         if (enabled) {
             hasAligned = false;
             adjustAiming = true;
+            oneTimeAdjust=true;
         } else {
             adjustAiming = false;
             hasAligned = false;
@@ -333,7 +352,7 @@ public final class Turret {
     public void update() {
         if (useOdometryTracking) {
             fineAdjustmentFlag=false;
-            turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
+            //turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
             updateOdomTracking();
         } else {
             //fineAdjustmentFlag=true;
@@ -346,15 +365,17 @@ public final class Turret {
                 rgbIndicator.setPosition(1);
             }
 
+            if (continuousTracking){
+                updateTurretAiming();
+            } else {
+                oneTimeAdjustTurretAiming();
+            }
 
-
-            updateTurretAiming();
-
-
+            //updateTurretAiming();
         } else{
             previousDesiredDeg=200;
             fineAdjustmentFlag=false;
-            turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
+            //turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
         }
         if (useOdometryTracking || trackingMode) {
             if (autoRPMEnabled) calcTargetRPM();
@@ -366,9 +387,9 @@ public final class Turret {
         sendTelemetry();
     }
 
-    public void update(double forwardInput, double strafeInput, double rotationInput) {
+   public void update(double forwardInput, double strafeInput, double rotationInput) {
         if (Math.abs(turretMotor.getCurrentPosition()-turretTargetPosition)<20){
-            turretMotor.setPower(0);
+            //turretMotor.setPower(0);
         }
         if (useOdometryTracking) {
             updateOdomTracking();
@@ -506,7 +527,62 @@ public final class Turret {
         //tagFound = true;
         ATAngle = 0.0;
     }
+    public void oneTimeAdjustTurretAiming(){
 
+        if (!useOdometryTracking && !tagFound) {
+            turretMotor.setTargetPosition(turretMotor.getCurrentPosition()); //?/
+            //turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
+            if (!useOdometryTracking){
+                previousDesiredDeg=200;
+            }
+            return;
+        }
+
+        errorDeg = errorAngleDeg - targetAngle;
+        // Low-pass filter for smooth response
+        //smoothedErrorDeg = 0.75 * smoothedErrorDeg + 0.25 * errorDeg;
+        // Check if aligned
+        if (Math.abs(errorDeg) < PARAMS.TURRET_POSITION_TOLERANCE_DEG) {
+            hasAligned = true;
+            //turretMotor.setTargetPosition(turretMotor.getCurrentPosition());//?/
+            //turretMotor.setPower(0);//?/
+            //return;//?/
+            //turretMotor.getCurrent(CurrentUnit.AMPS)
+            return;
+        } else{
+            hasAligned = false;
+        }
+
+
+        // Calculate target position based on error
+        double currentDeg = turretMotor.getCurrentPosition() / PARAMS.TICKS_PER_BIG_GEAR_DEGREE;
+
+        //double desiredDeg = currentDeg - smoothedErrorDeg;
+
+        double desiredDeg = currentDeg - errorDeg;
+        desiredDeg= normalizeAngleDegrees(desiredDeg);
+        // Apply soft limits
+        desiredDeg = clamper(desiredDeg, PARAMS.TURRET_MIN_DEG, PARAMS.TURRET_MAX_DEG);
+        //TurretDesiredDeg=desiredDeg;
+        if (useOdometryTracking){ //useOdometryTracking
+            // Convert to ticks and set target position
+            if (Math.abs(desiredDeg-previousDesiredDeg)>4){
+                turretTargetPosition = (int)(desiredDeg * PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
+                turretMotor.setTargetPosition(turretTargetPosition);
+                //turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);//?/
+                previousDesiredDeg=desiredDeg;
+            }
+        } else{
+            if (Math.abs(desiredDeg-previousDesiredDeg)>PARAMS.TURRET_POSITION_TOLERANCE_DEG && oneTimeAdjust) {
+                turretTargetPosition = (int) (desiredDeg * PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
+                turretMotor.setTargetPosition(turretTargetPosition);
+                oneTimeAdjust=false;
+                // turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);//?/
+                previousDesiredDeg = desiredDeg;
+            }
+        }
+
+    }
     public void updateTurretAiming() {
 
         if (actionFlagForTurning && !useOdometryTracking) {
@@ -524,7 +600,7 @@ public final class Turret {
 
         if (!tagFound) {
             turretMotor.setTargetPosition(turretMotor.getCurrentPosition()); //?/
-            turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
+            //turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
             if (!useOdometryTracking){
                 previousDesiredDeg=200;
             }
@@ -550,30 +626,24 @@ public final class Turret {
         // Check if aligned
         if (Math.abs(errorDeg) < PARAMS.TURRET_POSITION_TOLERANCE_DEG*2) {
             hasAligned = true;
-            turretMotor.setTargetPosition(turretMotor.getCurrentPosition());//?/
-            turretMotor.setPower(0);//?/
+            //turretMotor.setTargetPosition(turretMotor.getCurrentPosition());//?/
+            //turretMotor.setPower(0);//?/
             //return;//?/
+            //turretMotor.getCurrent(CurrentUnit.AMPS)
         } else{
             hasAligned = false;
         }
 
         if (actionFlagForTurning && fineAdjustmentFlag && hasAligned) {
-            turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
-            turretMotor.setPower(0);
+            //turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
+            //turretMotor.setPower(0);
             fineAdjustingTimer=timer.seconds();
             return;
-        }else{
-            
-            turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
-        }
-
-
-
-
-
-        if (hasAligned) {
+        }else if (hasAligned) {
             return;
+            //turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
         }
+
         // Calculate target position based on error
         double currentDeg = turretMotor.getCurrentPosition() / PARAMS.TICKS_PER_BIG_GEAR_DEGREE;
 
@@ -583,20 +653,20 @@ public final class Turret {
         desiredDeg= normalizeAngleDegrees(desiredDeg);
         // Apply soft limits
         desiredDeg = clamper(desiredDeg, PARAMS.TURRET_MIN_DEG, PARAMS.TURRET_MAX_DEG);
-        TurretDesiredDeg=desiredDeg;
+        //TurretDesiredDeg=desiredDeg;
         if (useOdometryTracking){ //useOdometryTracking
             // Convert to ticks and set target position
             if (Math.abs(desiredDeg-previousDesiredDeg)>5){
                 turretTargetPosition = (int)(desiredDeg * PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
                 turretMotor.setTargetPosition(turretTargetPosition);
-                turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);//?/
+                //turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);//?/
                 previousDesiredDeg=desiredDeg;
             }
         } else{
-            if (Math.abs(desiredDeg-previousDesiredDeg)>3) {
+            if (Math.abs(desiredDeg-previousDesiredDeg)>PARAMS.TURRET_POSITION_TOLERANCE_DEG*2) {
                 turretTargetPosition = (int) (desiredDeg * PARAMS.TICKS_PER_BIG_GEAR_DEGREE);
                 turretMotor.setTargetPosition(turretTargetPosition);
-                turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);//?/
+               // turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);//?/
                 previousDesiredDeg = desiredDeg;
             }
         }
@@ -648,7 +718,7 @@ public final class Turret {
                 targetRPM = 10.4 * x + 1900 - velocityCorFactor * velocityTowardGoal;
             } else {
               //  targetRPM = 11.6 * x + 1720 - velocityCorFactor * velocityTowardGoal;
-                targetRPM = 10.4 * x + 1900 - velocityCorFactor * velocityTowardGoal;
+                targetRPM = 10.4 * x + 2030 - velocityCorFactor * velocityTowardGoal;
 
             }
 
@@ -708,9 +778,27 @@ public final class Turret {
 
 
     public void resetTurretEncoder() {
+        turretMotor.resetDeviceConfigurationForOpMode();
         turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        turretMotor.setTargetPosition(0);
+
         turretMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
+        //turretMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        //turretMotor.setPower(PARAMS.TURRET_MOTOR_POWER);
+    }
+
+    public void updateTurretVelocity (double vol){
+        PARAMS.turretVelocity=vol;
+        turretMotor.setVelocity(PARAMS.turretVelocity);
+    }
+
+    public void updateTurretPID(){
+        PIDFCoefficients pidTurret = new PIDFCoefficients(PARAMS.turretKP, PARAMS.turretKI, PARAMS.turretKD, PARAMS.turretKF);
+        turretMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidTurret);
+
+        turretMotor.setVelocity(PARAMS.turretVelocity);
+        turretMotor.setTargetPosition(0);
     }
     // ==================== HELPER METHODS ====================
     public static double clamper(double v, double lo, double hi) {

@@ -65,8 +65,12 @@ public class ZeusBlueFarZoneV2_3 extends LinearOpMode {
         intake = new Intake(hardwareMap, telemetry);
         myRobot = new SSMyRobot(hardwareMap, drive, intake, turretSystem, startPose);
         Actions.runBlocking (myRobot.setTurretAnlge(20));
-        turretSystem.targetRPM=2400;
+        turretSystem.targetRPM=2800;
 
+
+        turretSystem.updateTurretPID();
+        turretSystem.updateTurretVelocity(500);
+        turretSystem.continuousTracking=true;
 
 
         waitForStart();

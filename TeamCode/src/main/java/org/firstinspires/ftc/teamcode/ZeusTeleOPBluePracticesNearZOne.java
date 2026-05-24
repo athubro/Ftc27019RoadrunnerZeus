@@ -20,13 +20,23 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
     private boolean usingOdomTracking = false;
     private boolean ableResetTime = true;
     private ElapsedTime sortTimer = new ElapsedTime();
+    private ElapsedTime autoShootingTimer = new ElapsedTime();
     private Pose2d targetPose = new Pose2d(0, 0, 0);
+
+    private Pose2d gatePos = new Pose2d(14.5, -63.4, Math.toRadians(-106.3));
+    private Pose2d gateOpenPos = new Pose2d(14.0, -67.1, Math.toRadians(-107.3));
+    private Pose2d colletingPos = new Pose2d(20, -73.3, Math.toRadians(-142.6));
+    private Pose2d shootingPos = new Pose2d(-13, -34.3, Math.toRadians(-141));
+    private Pose2d loadingZone = new Pose2d(43.67, 35, Math.toRadians(63));
 
     private Servo rgbIndicator;
 
     public String[] motiff = {"P", "P", "G"};
 
+    private boolean keepIntake = false;
+    private boolean keepFlyingWheelOn = false;
 
+    private boolean autoShootFlag=false;
     private double manualTurretDegrees = 0;
 
     private double speedRatio = 0.75;
@@ -195,8 +205,12 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
             // Enable/disable shooting with triggers
             if (gamepad2.right_trigger > 0.2) {
                 turret.setShootingEnabled(true);
+                keepFlyingWheelOn=false;
             } else {
-                turret.setShootingEnabled(false);
+                if (!keepFlyingWheelOn) {
+                    turret.setShootingEnabled(false);
+                }
+
             }
 
             // Manual RPM adjustment (D-pad up/down)
@@ -240,6 +254,7 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
 
             // Intake motor control with left trigger (intake) and left stick Y (outtake)
             if (gamepad1.right_trigger > 0.1) {
+                keepIntake=false;
                 intake.setIntakePower(gamepad1.right_trigger);  // Intake
                 intake.closeGate();
                 if (intake.ballCount == 3) {
@@ -248,11 +263,13 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
                     rgbIndicator.setPosition(0.36);
                 }
             } else if (Math.abs(gamepad1.left_trigger) > 0.1) {
+                keepIntake=false;
                 intake.setIntakePower(-gamepad1.left_trigger);  // Manual control
             } else {
-                intake.setIntakePower(0);  // Stop
+               if (!keepIntake) intake.setIntakePower(0);  // Stop
             }
             if (gamepad2.left_trigger > 0.1) {
+                keepIntake=false;
                 intake.setIntakePower(gamepad2.left_trigger);  // Intake
                 if (ableResetTime) {
                     sortTimer.reset();
@@ -262,7 +279,17 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
             } else {
                 ableResetTime = true;
             }
+            if (autoShootFlag){
+                if (turret.tagFound && isInShootingZone(myDrive.localizer.getPose())){
+                    keepIntake=true;
+                    intake.setIntakePower(0.7);
+                    intake.openGate();
+                }
+                if (autoShootingTimer.seconds()>3) {
+                    autoShootFlag=false;
 
+                }
+            }
             // Gate control
             if (gamepad2.rightBumperWasPressed()) {
                 intake.openGate();
@@ -281,17 +308,43 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
             // UPDATE ALL SYSTEMS
             // =========================
                     //==========================================================================================
-            if ((!gamepad1.aWasPressed()) ) {
-                if (!autoDrive) {
-                    Vector2d translation = new Vector2d((speedRatio * (-gamepad1.left_stick_y)), (speedRatio * (-gamepad1.left_stick_x)));
-                    double rotation = -speedRatio * gamepad1.right_stick_x;
-                    myDrive.setDrivePowers(new PoseVelocity2d(translation, rotation));
-                } else {
-                    if (Math.abs(gamepad1.left_stick_y) > 0.01 || Math.abs(gamepad1.left_stick_x) > 0.01 || Math.abs(gamepad1.right_stick_x) > 0.01) {
-                        autoDrive =false;
-                    }
-                }
-            } else {
+            if (gamepad1.rightBumperWasPressed()) {
+                autoDrive = true;
+                keepIntake=false;
+                //turret.setShootingEnabled(true);
+
+                Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose())
+                        .strafeToLinearHeading(shootingPos.position, shootingPos.heading).build());
+
+
+
+                turret.setTrackingMode(true);
+                turret.setAutoAngleEnabled(true);
+                turret.setAutoRPMEnabled(true);
+                usingOdomTracking = false;
+                //usingOdomTracking = !usingOdomTracking;
+                turret.setUseOdometryTracking(false);
+                autoShootFlag=true;
+                autoShootingTimer.reset();
+                //usingOdomTracking = !usingOdomTracking;
+
+            }else if (gamepad1.leftBumperWasPressed()) {
+
+                autoDrive = true;
+
+                Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose())
+                        .strafeToLinearHeading(gatePos.position, gatePos.heading).strafeToLinearHeading(gateOpenPos.position, gateOpenPos.heading).strafeToLinearHeading(colletingPos.position, colletingPos.heading).build());
+                intake.closeGate();
+                intake.setIntakePower(1);
+                keepIntake=true;
+            } else if (gamepad1.yWasPressed()){
+                autoDrive = true;
+
+                Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose())
+                        .strafeToLinearHeading(loadingZone.position, loadingZone.heading).build());
+
+
+            } else if (gamepad1.aWasPressed()){
                 //hmmmmmm
                 //Pose2d curPose2D = drive.localizer.getPose();
                 autoDrive = true;
@@ -302,7 +355,18 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
                 Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose())
                         .strafeToLinearHeading(targetPose.position, targetPose.heading).build());
                 // }
+            } else  {
+                if (!autoDrive) {
+                    Vector2d translation = new Vector2d((speedRatio * (-gamepad1.left_stick_y)), (speedRatio * (-gamepad1.left_stick_x)));
+                    double rotation = -0.6 * gamepad1.right_stick_x;
+                    myDrive.setDrivePowers(new PoseVelocity2d(translation, rotation));
+                } else {
+                    if (Math.abs(gamepad1.left_stick_y) > 0.01 || Math.abs(gamepad1.left_stick_x) > 0.01 || Math.abs(gamepad1.right_stick_x) > 0.01) {
+                        autoDrive = false;
+                    }
+                }
             }
+
             if (gamepad1.xWasPressed())  {
                 autoDrive = false;
             }
@@ -398,6 +462,18 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
             telemetry.addLine("GP2-B: Toggle Gate");
 
             telemetry.update();
+        }
+    }
+
+    public static boolean isInShootingZone (Pose2d position){
+        double line1A=-1;
+        double line1B=5;
+        double line2A=1;
+        double line2B=5;
+        if ( (position.position.y<position.position.x*line1A+line1B) && (position.position.y<position.position.x*line2A+line2B)){
+            return true;
+        } else {
+            return false;
         }
     }
 }

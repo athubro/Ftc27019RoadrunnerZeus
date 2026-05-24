@@ -586,7 +586,7 @@ public final class Turret {
     public void updateTurretAiming() {
 
         if (actionFlagForTurning && !useOdometryTracking) {
-            if (timer.seconds()> fineAdjustingTimer+0.5 && timer.seconds()<fineAdjustingTimer+3 ){
+            if (timer.seconds()> fineAdjustingTimer+1 && timer.seconds()<fineAdjustingTimer+3 ){
                 fineAdjustingTimer=-1;
                 //fineAdjustmentFlag=false;
                 fineAdjustment();
@@ -622,11 +622,11 @@ public final class Turret {
          */
         errorDeg = errorAngleDeg - targetAngle;
         // Low-pass filter for smooth response
-        smoothedErrorDeg = 0.75 * smoothedErrorDeg + 0.25 * errorDeg;
+
         // Check if aligned
         if (Math.abs(errorDeg) < PARAMS.TURRET_POSITION_TOLERANCE_DEG*2) {
             hasAligned = true;
-            //turretMotor.setTargetPosition(turretMotor.getCurrentPosition());//?/
+            turretMotor.setTargetPosition(turretMotor.getCurrentPosition());//?/
             //turretMotor.setPower(0);//?/
             //return;//?/
             //turretMotor.getCurrent(CurrentUnit.AMPS)
@@ -635,7 +635,7 @@ public final class Turret {
         }
 
         if (actionFlagForTurning && fineAdjustmentFlag && hasAligned) {
-            //turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
+            turretMotor.setTargetPosition(turretMotor.getCurrentPosition());
             //turretMotor.setPower(0);
             fineAdjustingTimer=timer.seconds();
             return;

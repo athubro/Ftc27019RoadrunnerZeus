@@ -70,7 +70,12 @@ public class ZeusRedNearZoneV1 extends LinearOpMode {
         Actions.runBlocking (myRobot.setTurretAnlge(12));
         turretSystem.targetRPM=2500;
 
-
+        turretSystem.targetRPM=2500;
+        turretSystem.actionFlagForTurning=false;
+        turretSystem.resetTurretEncoder();
+        turretSystem.updateTurretPID();
+        turretSystem.updateTurretVelocity(400);
+        turretSystem.continuousTracking=true;
 
         waitForStart();
 

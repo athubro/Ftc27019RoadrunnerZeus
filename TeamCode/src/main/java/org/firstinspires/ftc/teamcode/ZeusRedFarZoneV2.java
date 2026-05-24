@@ -10,7 +10,7 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-@Autonomous(name = "ZeusRedFarZoneV1", group = "Autonomous")
+@Autonomous(name = "ZeusRedFarZoneV2", group = "Autonomous")
 public class ZeusRedFarZoneV2 extends LinearOpMode {
 
     private Turret turretSystem;
@@ -66,7 +66,13 @@ public class ZeusRedFarZoneV2 extends LinearOpMode {
         intake = new Intake(hardwareMap, telemetry);
         myRobot = new SSMyRobot(hardwareMap, drive, intake, turretSystem, startPose);
         Actions.runBlocking (myRobot.setTurretAnlge(-20));
-        turretSystem.targetRPM=2400;
+        //turretSystem.targetRPM=2400;
+        turretSystem.targetRPM=2800;
+
+
+        turretSystem.updateTurretPID();
+        turretSystem.updateTurretVelocity(500);
+        turretSystem.continuousTracking=true;
 
 
 

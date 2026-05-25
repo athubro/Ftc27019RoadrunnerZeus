@@ -776,7 +776,7 @@ public class SSMyRobot  {
 
     public class WaitStopMoving implements Action {
         public boolean run(@NonNull TelemetryPacket pack) {
-            if (drive.localizer.update().linearVel.x < 1 && drive.localizer.update().linearVel.y < 1 && drive.localizer.update().angVel < 2) {
+            if (Math.abs(drive.localizer.update().linearVel.x) < 0.8 && Math.abs(drive.localizer.update().linearVel.y) < 0.8 && Math.abs(drive.localizer.update().angVel) < 1.5) {
                 return false;
             } else {
                 return true;

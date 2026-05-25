@@ -59,19 +59,19 @@ public class ZeusBlueFarZoneV2_3 extends LinearOpMode {
         turretSystem = new Turret(hardwareMap, drive, telemetry, startPose);
         turretSystem.resetTurretEncoder();
         //   turretSystem.turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        turretSystem.actionFlagForTurning=true;
+        //turretSystem.actionFlagForTurning=true;
         turretSystem.fineAdjustmentFlag=true;
         turretSystem.teleOpOnly=false;
         intake = new Intake(hardwareMap, telemetry);
         myRobot = new SSMyRobot(hardwareMap, drive, intake, turretSystem, startPose);
-        Actions.runBlocking (myRobot.setTurretAnlge(20));
+
         turretSystem.targetRPM=2800;
 
 
         turretSystem.updateTurretPID();
         turretSystem.updateTurretVelocity(500);
-        turretSystem.continuousTracking=true;
-
+        turretSystem.continuousTracking=false;
+        turretSystem.manualTurretAngle(20);;
 
         waitForStart();
 
@@ -79,6 +79,7 @@ public class ZeusBlueFarZoneV2_3 extends LinearOpMode {
         // =========================
         // Initial Setup
         // =========================
+
         turretSystem.update();
         turretSystem.PARAMS.TARGET_TAG_ID = 20;
         intake.storageUpdate();
@@ -125,7 +126,7 @@ public class ZeusBlueFarZoneV2_3 extends LinearOpMode {
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose()).
                         strafeToLinearHeading(lastSpikeStart.position,lastSpikeStart.heading).strafeToLinearHeading(lastSpikeEnd.position,lastSpikeEnd.heading,new TranslationalVelConstraint(30)).build(),
                         myRobot.intakePower(0.1),//, new TranslationalVelConstraint(10)
-                        myRobot.setTurretAnlge(-38),
+                        myRobot.setTurretAnlge(-45),
                         myRobot.turnOffUpdate())));
 
 

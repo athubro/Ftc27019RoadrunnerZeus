@@ -27,7 +27,7 @@ public final class Turret {
     // ==================== PARAMETERS ====================
     public class Params {
         public static final double PID_INTERVAL = 0.1; // Flywheel PID
-        public double kP =200.0;//60, 15.929    ===========  99?
+        public double kP =150;//60, 15.929    ===========  99? //200
         public double kI = 0.0;
         public double kD = 0.0;
         public double kF = 15.0; // Flywheel motor =========== 15?
@@ -82,7 +82,7 @@ public final class Turret {
     public double ATAngle = 0;
     public boolean tagFound = false;
     //change with alliance and april tag
-    public double LLFarZoneOffset = 3;
+    public double LLFarZoneOffset = 3.5; //3
     public double velocityCorFactor= 7;
     public double angleCorrFactor =0.5;
 
@@ -122,6 +122,7 @@ public final class Turret {
     // Motiff detection (added back from old code)
     public String[] motiff = {"N", "N", "N"};
     public boolean teleOpOnly=true;
+    private double [] disToTagList ={0, 0, 0 ,0 ,0};
 
     // ==================== CONSTRUCTOR ====================
     public Turret(HardwareMap hardwareMap, MecanumDrive myDrive, Telemetry telemetry, Pose2d initialPose) {
@@ -709,7 +710,14 @@ public final class Turret {
         double velocityTowardGoal = velocityX*Math.cos(turretAngle*Math.PI/180)+velocityY*Math.sin(turretAngle*Math.PI/180);
         double velocityParallelGoal = velocityY*Math.cos(turretAngle*Math.PI/180)+velocityX*Math.sin(turretAngle*Math.PI/180); //moving toward left is positive
         targetAngle=-velocityParallelGoal*angleCorrFactor;
-        double x = disToAprilTag;
+        double x=0;
+        for (int i =0; i< disToTagList.length-1; i++){
+            x+= disToTagList[i];
+            disToTagList[i]=disToTagList[i+1];
+        }
+        disToTagList[disToTagList.length-1]=disToAprilTag;
+        x+=disToAprilTag;
+        x=x/disToTagList.length;
         if (tagFound) {
            // targetRPM = 11.6 * x + 1650 - velocityCorFactor * velocityTowardGoal;
 
@@ -718,7 +726,7 @@ public final class Turret {
                 targetRPM = 10.4 * x + 1900 - velocityCorFactor * velocityTowardGoal;
             } else {
               //  targetRPM = 11.6 * x + 1720 - velocityCorFactor * velocityTowardGoal;
-                targetRPM = 10.4 * x + 2030 - velocityCorFactor * velocityTowardGoal;
+                targetRPM = 10.4 * x + 2000 - velocityCorFactor * velocityTowardGoal;
 
             }
 
@@ -735,7 +743,7 @@ public final class Turret {
                 //shooterAngleSetting = 1.76*0.001*x-0.0829;
                 shooterAngleSetting = -1.25 + 0.0681*x - 0.000781*x*x + 0.00000293*x*x*x;
             } else {
-                shooterAngleSetting = 0.9;
+                shooterAngleSetting = 0.85;
                // shooterAngleSetting = -1.25 + 0.0681*x - 0.000781*x*x + 0.00000293*x*x*x;
 
             }
@@ -751,6 +759,9 @@ public final class Turret {
                 turretAnglePos -= TURRET_ANGLE_STEP;
             }
             turretAnglePos = clamper(turretAnglePos, 0.0, 1.0);
+        }
+        if (currentRPMLeft> targetRPM&& targetRPM>2800){
+            turretAngle.setPosition(turretAnglePos*(1+2*(currentRPMLeft-targetRPM)/targetRPM));
         }
         turretAngle.setPosition(turretAnglePos);
     }

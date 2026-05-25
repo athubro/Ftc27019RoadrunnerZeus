@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
@@ -10,8 +9,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name = "Zeus Blue practice (v2 NearZone)", group = "TeleOp")
-public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
+@TeleOp(name = "ZeusTeleOPRed v2", group = "TeleOp")
+public class ZeusTeleOPRedV2 extends LinearOpMode {
 
     public RobotInfoStorage info;
     public  MecanumDrive myDrive;
@@ -24,12 +23,12 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
     private ElapsedTime autoShootingTimer = new ElapsedTime();
     private Pose2d targetPose = new Pose2d(0, 0, 0);
 
-    private Pose2d gatePos = new Pose2d(15.9, -64, Math.toRadians(-110)); //Pose2d(14.5, -63.4, Math.toRadians(-106.3));
-    private Pose2d gateOpenPos = new Pose2d(15.1, -68.7, Math.toRadians(-114.2));//Pose2d(14.0, -67.1, Math.toRadians(-107.3));
-    private Pose2d colletingPos = new Pose2d(20, -73.3, Math.toRadians(-142.6));
-    private Pose2d shootingPos = new Pose2d(-13, -34.3, Math.toRadians(-141));
-    private Pose2d loadingZone = new Pose2d(43.67, 35, Math.toRadians(63));
-    private Pose2d gateResetPos= new Pose2d(-12.3,-56.3, Math.toRadians(-1.77)); //Pose2d(3.67,-62.7, Math.toRadians(-91.2));
+    private Pose2d gatePos = new Pose2d(7, 41, Math.toRadians(115)); //Pose2d(9.6, 43.5, Math.toRadians(115))
+    private Pose2d gateOpenPos = new Pose2d(4.5, 47, Math.toRadians(112.7));//Pose2d(14.0, -67.1, Math.toRadians(-107.3));
+    private Pose2d colletingPos = new Pose2d(12, 47, Math.toRadians(132));
+    private Pose2d shootingPos = new Pose2d(-14.9, 1, Math.toRadians(135)); // Pose2d(-23.4, 6.9, Math.toRadians(135))
+    private Pose2d loadingZone = new Pose2d(39.5, -36.4, Math.toRadians(-1.5));
+    private Pose2d gateResetPos= new Pose2d(-13.1,47.6, Math.toRadians(87.9));
 
     private Servo rgbIndicator;
 
@@ -43,16 +42,19 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
 
     private double speedRatio = 0.75;
 
+    private boolean holdingBall=false;
+
     @Override
     public void runOpMode() throws InterruptedException {
 
         // Initialize all systems
         info = new RobotInfoStorage();
-       // initialPose = info.autoEndPose;
+        // initialPose = info.autoEndPose;
+        initialPose = RobotInfoStorage.autoEndPose;;
         myDrive= new MecanumDrive(hardwareMap, initialPose);
         turret = new Turret(hardwareMap, myDrive ,telemetry, initialPose);
         intake = new Intake(hardwareMap, telemetry);
-       // turret.turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        // turret.turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         //
         rgbIndicator = hardwareMap.get(Servo.class, "rgbLight");
 
@@ -78,10 +80,14 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
         //sleep (5000);
         turret.resetTurretEncoder();
         telemetry.addData("Turret Position", turret.turretMotor.getCurrentPosition());
-       // sleep(3000);
+        // sleep(3000);
         turret.updateTurretPID();
         turret.updateTurretVelocity(400);
         turret.continuousTracking=true;
+
+        turret.PARAMS.TARGET_TAG_ID = 24;
+        turret.LLFarZoneOffset = -2;
+
         waitForStart();
 
         // Button state trackers for toggles
@@ -91,6 +97,7 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
         boolean gateToggleLast = false;
 
 
+
         while (opModeIsActive()) {
             intake.storageUpdate();
             // =========================
@@ -98,8 +105,8 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
             // =========================
 
             //double forward = -speedRatio * gamepad1.left_stick_y;
-           /// double strafe = -speedRatio * gamepad1.left_stick_x;
-           // double rotation = -speedRatio * gamepad1.right_stick_x;
+            /// double strafe = -speedRatio * gamepad1.left_stick_x;
+            // double rotation = -speedRatio * gamepad1.right_stick_x;
             if (myDrive.localizer.getPose().position.x> 30){
                 turret.updateTurretVelocity(700);
                 turret.continuousTracking=false;
@@ -141,8 +148,8 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
                 usingOdomTracking = true;
                 //usingOdomTracking = !usingOdomTracking;
                 turret.setUseOdometryTracking(true);
-               // if (turret.trackingMode) {
-               //     turret.updateTurretAiming();
+                // if (turret.trackingMode) {
+                //     turret.updateTurretAiming();
                 //}
             }
 
@@ -161,9 +168,9 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
                 usingOdomTracking = false;
                 //usingOdomTracking = !usingOdomTracking;
                 turret.setUseOdometryTracking(false);
-               // if (turret.trackingMode) {
-               //     turret.updateTurretAiming();
-               // }
+                // if (turret.trackingMode) {
+                //     turret.updateTurretAiming();
+                // }
 
                 autoShootFlag=true;
                 autoShootingTimer.reset();
@@ -257,7 +264,7 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
 
                 if (turret.tagFound&&!usingOdomTracking) {
                     //temporary turn off shootngenable at hotel!
-                   turret.setShootingEnabled(true); //= true;
+                    turret.setShootingEnabled(true); //= true;
                 }
             }
 
@@ -268,6 +275,7 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
             // Intake motor control with left trigger (intake) and left stick Y (outtake)
             if (gamepad1.right_trigger > 0.1) {
                 keepIntake=false;
+                holdingBall=false;
                 intake.setIntakePower(gamepad1.right_trigger);  // Intake
                 intake.closeGate();
                 if (intake.ballCount == 3) {
@@ -277,9 +285,14 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
                 }
             } else if (Math.abs(gamepad1.left_trigger) > 0.1) {
                 keepIntake=false;
+                holdingBall=false;
                 intake.setIntakePower(-gamepad1.left_trigger);  // Manual control
             } else {
-               if (!keepIntake) intake.setIntakePower(0);  // Stop
+                if (!keepIntake && !holdingBall){
+                    intake.setIntakePower(0);  // Stop
+                } else if (holdingBall){
+                    intake.setIntakePower(0.3);
+                }
             }
             if (gamepad2.left_trigger > 0.1) {
                 keepIntake=false;
@@ -295,6 +308,7 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
             if (autoShootFlag){
                 if (turret.tagFound && isInShootingZone(myDrive.localizer.getPose()) && turret.flywheelUpToSpeed){
                     keepIntake=true;
+                    holdingBall=false;
                     intake.setIntakePower(1);
                     intake.openGate();
                 }
@@ -302,7 +316,9 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
                 if (autoShootingTimer.seconds()>4) {
                     if (isInShootingZone(myDrive.localizer.getPose())){
                         autoShootFlag=false;
+                        holdingBall=false;
                         intake.setIntakePower(0);
+                        intake.closeGate();
                         turret.setTrackingMode(false);
                     } else{
                         autoShootFlag=false;
@@ -327,10 +343,11 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
             // =========================
             // UPDATE ALL SYSTEMS
             // =========================
-                    //==========================================================================================
+            //==========================================================================================
             if (gamepad1.rightBumperWasPressed()) {
                 autoDrive = true;
                 keepIntake=false;
+                holdingBall=true;
                 //turret.setShootingEnabled(true);
 
                 Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose())
@@ -356,7 +373,8 @@ public class ZeusTeleOPBluePracticesNearZOne extends LinearOpMode {
                         .strafeToLinearHeading(gatePos.position, gatePos.heading).build()); //.strafeToLinearHeading(colletingPos.position, colletingPos.heading)
                 intake.closeGate();
                 intake.setIntakePower(1);
-                Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose()).strafeToLinearHeading(gateOpenPos.position, gateOpenPos.heading).build());
+
+                Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose()).strafeToLinearHeading(gateOpenPos.position, gateOpenPos.heading).strafeToLinearHeading(colletingPos.position, colletingPos.heading).build());
                 keepIntake=true;
             } else if (gamepad1.yWasPressed()){
                 autoDrive = true;

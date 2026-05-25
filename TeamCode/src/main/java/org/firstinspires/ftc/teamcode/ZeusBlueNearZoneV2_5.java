@@ -64,14 +64,14 @@ public class ZeusBlueNearZoneV2_5 extends LinearOpMode {
         intake = new Intake(hardwareMap, telemetry);
         myRobot = new SSMyRobot(hardwareMap, drive, intake, turretSystem, startPose);
 
-        Actions.runBlocking (myRobot.setTurretAnlge(-12));
+        //Actions.runBlocking (myRobot.setTurretAnlge(-12));
         turretSystem.targetRPM=2500;
         turretSystem.actionFlagForTurning=false;
         turretSystem.resetTurretEncoder();
         turretSystem.updateTurretPID();
         turretSystem.updateTurretVelocity(400);
         turretSystem.continuousTracking=true;
-
+        turretSystem.manualTurretAngle(-12);
         waitForStart();
 
         intake.generalTimerReset();

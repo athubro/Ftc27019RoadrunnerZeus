@@ -5,13 +5,14 @@ import com.acmerobotics.roadrunner.ParallelAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.TranslationalVelConstraint;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-
+@Disabled
 @Autonomous(name = "ZeusRedFarZoneV2", group = "Autonomous")
-public class ZeusRedFarZoneV2 extends LinearOpMode {
+public class ZeusRedFarZoneV2backup extends LinearOpMode {
 
     private Turret turretSystem;
     private MecanumDrive drive;
@@ -58,28 +59,31 @@ public class ZeusRedFarZoneV2 extends LinearOpMode {
 
         turretSystem = new Turret(hardwareMap, drive, telemetry, startPose);
         turretSystem.resetTurretEncoder();
-        //   turretSystem.turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        //turretSystem.actionFlagForTurning=true;
+     //   turretSystem.turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        turretSystem.LLFarZoneOffset = -2;
+        turretSystem.actionFlagForTurning=true;
         turretSystem.fineAdjustmentFlag=true;
-        turretSystem.teleOpOnly=false;
+        turretSystem.targetPos = new Vector2d(-53, 60);
         intake = new Intake(hardwareMap, telemetry);
         myRobot = new SSMyRobot(hardwareMap, drive, intake, turretSystem, startPose);
-
+        Actions.runBlocking (myRobot.setTurretAnlge(-20));
+        //turretSystem.targetRPM=2400;
         turretSystem.targetRPM=2800;
 
 
         turretSystem.updateTurretPID();
         turretSystem.updateTurretVelocity(500);
         turretSystem.continuousTracking=false;
-        turretSystem.manualTurretAngle(-20);;
-        turretSystem.LLFarZoneOffset = -2;
+        turretSystem.manualTurretAngle(20);;
+
+
+
         waitForStart();
 
         intake.generalTimerReset();
         // =========================
         // Initial Setup
         // =========================
-
         turretSystem.update();
         turretSystem.PARAMS.TARGET_TAG_ID = 24;
         intake.storageUpdate();
@@ -126,7 +130,7 @@ public class ZeusRedFarZoneV2 extends LinearOpMode {
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose()).
                         strafeToLinearHeading(lastSpikeStart.position,lastSpikeStart.heading).strafeToLinearHeading(lastSpikeEnd.position,lastSpikeEnd.heading,new TranslationalVelConstraint(30)).build(),
                         myRobot.intakePower(0.1),//, new TranslationalVelConstraint(10)
-                        myRobot.setTurretAnlge(45),
+                        myRobot.setTurretAnlge(38),
                         myRobot.turnOffUpdate())));
 
 
@@ -138,9 +142,9 @@ public class ZeusRedFarZoneV2 extends LinearOpMode {
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
                         .strafeToLinearHeading(shotingPos.position,shotingPos.heading)
                         .build(),
+                        //myRobot.turnOnTracking(),
                         myRobot.waitStopMoving(),
-                        myRobot.turnOnTracking(),
-
+                        myRobot.turretLook(),
                         myRobot.shooterSpinUp(),
                         myRobot.waitSpinUp(),
                         myRobot.openGate(),
@@ -160,9 +164,9 @@ public class ZeusRedFarZoneV2 extends LinearOpMode {
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
                         .strafeToLinearHeading(cornerStart.position,cornerStart.heading)
-                        .strafeToLinearHeading(cornerEnd.position,cornerEnd.heading, new TranslationalVelConstraint(12))
+                        .strafeToLinearHeading(cornerEnd.position,cornerEnd.heading, new TranslationalVelConstraint(30))
                         .strafeToLinearHeading(cornerSlideBack.position,cornerSlideBack.heading)
-                        .strafeToLinearHeading(cornerSlideFront.position,cornerSlideFront.heading, new TranslationalVelConstraint(12)).build(),
+                        .strafeToLinearHeading(cornerSlideFront.position,cornerSlideFront.heading, new TranslationalVelConstraint(30)).build(),
                         //myRobot.resetIntakeTimer(),
                         //myRobot.waitFullStorage(),
 
@@ -179,10 +183,9 @@ public class ZeusRedFarZoneV2 extends LinearOpMode {
                         .strafeToLinearHeading(shotingPos.position,shotingPos.heading)
 
                         .build(),
+                        //myRobot.turnOnTracking(),
                         myRobot.waitStopMoving(),
-
-                        myRobot.turnOnTracking(),
-
+                        myRobot.turretLook(),
 
                         myRobot.shooterSpinUp(),
                         myRobot.waitSpinUp(),
@@ -221,9 +224,9 @@ public class ZeusRedFarZoneV2 extends LinearOpMode {
 
                         .strafeToLinearHeading(shotingPos.position,shotingPos.heading)
                         .build(),
+                        //myRobot.turnOnTracking(),
                         myRobot.waitStopMoving(),
-
-                        myRobot.turnOnTracking(),
+                        myRobot.turretLook(),
 
                         myRobot.shooterSpinUp(),
                         myRobot.waitSpinUp(),
@@ -240,15 +243,16 @@ public class ZeusRedFarZoneV2 extends LinearOpMode {
         drive.updatePoseEstimate();
         RobotInfoStorage.autoEndPose = drive.localizer.getPose();
 
+
+
         Actions.runBlocking(myRobot.turnOnUpdate());
         Actions.runBlocking(new ParallelAction(myRobot.updateRobot(),
                 new SequentialAction( drive.actionBuilder(drive.localizer.getPose())
-                        .strafeToLinearHeading(park.position,park.heading).build(),
-                        // myRobot.resetIntakeTimer(),
-                        // myRobot.waitFullStorage(),
 
-                        myRobot.turnOffUpdate())));
-        /*
+                        .strafeToLinearHeading(park.position,park.heading)
+                        .build())));
+/*
+/*
 /*
 
         drive.updatePoseEstimate();

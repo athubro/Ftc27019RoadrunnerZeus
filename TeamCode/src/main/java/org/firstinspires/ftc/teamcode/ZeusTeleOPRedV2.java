@@ -309,8 +309,9 @@ public class ZeusTeleOPRedV2 extends LinearOpMode {
                 if (turret.tagFound && isInShootingZone(myDrive.localizer.getPose()) && turret.flywheelUpToSpeed){
                     keepIntake=true;
                     holdingBall=false;
-                    intake.setIntakePower(1);
                     intake.openGate();
+                    intake.setIntakePower(1);
+
                 }
 
                 if (autoShootingTimer.seconds()>4) {

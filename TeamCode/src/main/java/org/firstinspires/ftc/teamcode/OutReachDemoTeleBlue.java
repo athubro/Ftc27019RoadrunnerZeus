@@ -9,8 +9,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name = "ForbiddenTeleBlueV2", group = "TeleOp")
-public class ForbiddenTeleOPBlueV2 extends LinearOpMode {
+@TeleOp(name = "OutReachDemoTeleBlue", group = "TeleOp")
+public class OutReachDemoTeleBlue extends LinearOpMode {
 
     public RobotInfoStorage info;
     public  MecanumDrive myDrive;
@@ -24,13 +24,11 @@ public class ForbiddenTeleOPBlueV2 extends LinearOpMode {
     private Pose2d targetPose = new Pose2d(0, 0, 0);
 
     private Pose2d gatePos = new Pose2d(14.5, -63.4, Math.toRadians(-106.3));
-    private Pose2d gateOpenPos = new Pose2d(14.0, -67.1, Math.toRadians(-107.3));
+    private Pose2d gateOpenPos = new Pose2d(15.7, -70.0368, Math.toRadians(-121.8748)); //14.0, -67.1, Math.toRadians(-107.3)
     private Pose2d colletingPos = new Pose2d(20, -73.3, Math.toRadians(-142.6));
     private Pose2d shootingPos = new Pose2d(-13, -34.3, Math.toRadians(-141));
     private Pose2d loadingZone = new Pose2d(43.67, 35, Math.toRadians(63));
-
     private Pose2d gateResetPos= new Pose2d(-12.3,-56.3, Math.toRadians(-1.77));
-
     private Servo rgbIndicator;
 
     public String[] motiff = {"P", "P", "G"};
@@ -41,7 +39,8 @@ public class ForbiddenTeleOPBlueV2 extends LinearOpMode {
     private boolean autoShootFlag=false;
     private double manualTurretDegrees = 0;
 
-    private double speedRatio = 0.75;
+    private double speedRatio = 0.25;
+    private boolean holdingBall=false;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -98,24 +97,20 @@ public class ForbiddenTeleOPBlueV2 extends LinearOpMode {
             // =========================
 
             //double forward = -speedRatio * gamepad1.left_stick_y;
-           /// double strafe = -speedRatio * gamepad1.left_stick_x;
-           // double rotation = -speedRatio * gamepad1.right_stick_x;
+            /// double strafe = -speedRatio * gamepad1.left_stick_x;
+            // double rotation = -speedRatio * gamepad1.right_stick_x;
             if (myDrive.localizer.getPose().position.x> 30){
                 turret.updateTurretVelocity(700);
                 turret.continuousTracking=false;
             } else {
-                turret.updateTurretVelocity(conTurretSpeed);
+                turret.updateTurretVelocity(400);
                 turret.continuousTracking=true;
             }
             // Speed control
-            if (gamepad1.right_bumper) {
-                speedRatio = 1.0;  // Full speed
-            } else if (gamepad1.left_bumper) {
-                speedRatio = 0.3;  // Slow speed
-            } else {
-                speedRatio = 0.75; // Normal speed
-            }
 
+            if (gamepad1.backWasPressed()){
+                myDrive.localizer.setPose(gateResetPos);
+            }
             // =========================
             // GAMEPAD 2: TURRET CONTROLS
             // =========================
@@ -139,13 +134,13 @@ public class ForbiddenTeleOPBlueV2 extends LinearOpMode {
                 usingOdomTracking = true;
                 //usingOdomTracking = !usingOdomTracking;
                 turret.setUseOdometryTracking(true);
-               // if (turret.trackingMode) {
-               //     turret.updateTurretAiming();
+                // if (turret.trackingMode) {
+                //     turret.updateTurretAiming();
                 //}
             }
 
             // Toggle Vision vs Odom tracking
-            if (gamepad1.aWasPressed()) {
+            if (gamepad2.aWasPressed()) {
                 boolean tempState ;
                 if (usingOdomTracking) {
                     tempState= true;
@@ -159,9 +154,9 @@ public class ForbiddenTeleOPBlueV2 extends LinearOpMode {
                 usingOdomTracking = false;
                 //usingOdomTracking = !usingOdomTracking;
                 turret.setUseOdometryTracking(false);
-               // if (turret.trackingMode) {
-               //     turret.updateTurretAiming();
-               // }
+                // if (turret.trackingMode) {
+                //     turret.updateTurretAiming();
+                // }
 
                 autoShootFlag=true;
                 autoShootingTimer.reset();
@@ -213,13 +208,6 @@ public class ForbiddenTeleOPBlueV2 extends LinearOpMode {
             }
 
 
-
-
-            if (gamepad1.backWasPressed()){
-                myDrive.localizer.setPose(gateResetPos);
-            }
-
-
             // Enable/disable shooting with triggers
             if (gamepad2.right_trigger > 0.2) {
                 turret.setShootingEnabled(true);
@@ -262,7 +250,7 @@ public class ForbiddenTeleOPBlueV2 extends LinearOpMode {
 
                 if (turret.tagFound&&!usingOdomTracking) {
                     //temporary turn off shootngenable at hotel!
-                   turret.setShootingEnabled(true); //= true;
+                    turret.setShootingEnabled(true); //= true;
                 }
             }
 
@@ -273,38 +261,56 @@ public class ForbiddenTeleOPBlueV2 extends LinearOpMode {
             // Intake motor control with left trigger (intake) and left stick Y (outtake)
             if (gamepad1.right_trigger > 0.1) {
                 keepIntake=false;
-                intake.setIntakePower(gamepad1.right_trigger);  // Intake
+                holdingBall=false;
+                intake.setIntakePower(0.5*gamepad1.right_trigger);  // Intake
                 intake.closeGate();
                 if (intake.ballCount == 3) {
                     rgbIndicator.setPosition(0.47);
                 } else {
                     rgbIndicator.setPosition(0.36);
                 }
-           // } else if (Math.abs(gamepad1.left_trigger) > 0.1) {
-               // keepIntake=false;
-              //  intake.setIntakePower(-gamepad1.left_trigger);  // Manual control
-            } else {
-               if (!keepIntake) intake.setIntakePower(0);  // Stop
-            }
-            if (gamepad1.left_trigger > 0.1) {
+            } else if (Math.abs(gamepad1.left_trigger) > 0.1) {
                 keepIntake=false;
-                intake.setIntakePower(gamepad1.left_trigger);  // Intake
+                holdingBall=false;
+                intake.setIntakePower(-0.5 * gamepad1.left_trigger);  // Manual control
+            } else {
+                if (!keepIntake && !holdingBall){
+                    intake.setIntakePower(0);  // Stop
+                } else if (holdingBall){
+                    intake.setIntakePower(0.3);
+                }
+            }
+            if (gamepad2.left_trigger > 0.1) {
+                keepIntake=false;
+                intake.openGate();
+                intake.setIntakePower(0.6* gamepad2.left_trigger);  // Intake
                 if (ableResetTime) {
                     sortTimer.reset();
                     ableResetTime = false;
                 }
-                intake.openGate();
+
             } else {
                 ableResetTime = true;
             }
             if (autoShootFlag){
                 if (turret.tagFound && isInShootingZone(myDrive.localizer.getPose()) && turret.flywheelUpToSpeed){
                     keepIntake=true;
-                    intake.setIntakePower(0.7);
-                    intake.openGate();
+                    holdingBall=false;
+                    //intake.openGate();
+                    //intake.setIntakePower(1);
+
                 }
-                if (autoShootingTimer.seconds()>3) {
-                    autoShootFlag=false;
+
+                if (autoShootingTimer.seconds()>4) {
+                    if (isInShootingZone(myDrive.localizer.getPose())){
+                        autoShootFlag=false;
+                        holdingBall=false;
+                        intake.setIntakePower(0);
+                        intake.closeGate();
+                        turret.setTrackingMode(false);
+                    } else{
+                        autoShootFlag=false;
+                    }
 
                 }
             }
@@ -325,10 +331,11 @@ public class ForbiddenTeleOPBlueV2 extends LinearOpMode {
             // =========================
             // UPDATE ALL SYSTEMS
             // =========================
-                    //==========================================================================================
+            //==========================================================================================
             if (gamepad1.rightBumperWasPressed()) {
                 autoDrive = true;
                 keepIntake=false;
+                holdingBall=true;
                 //turret.setShootingEnabled(true);
 
                 Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose())
@@ -350,19 +357,20 @@ public class ForbiddenTeleOPBlueV2 extends LinearOpMode {
 
                 autoDrive = true;
 
-                Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose())
-                        .strafeToLinearHeading(gatePos.position, gatePos.heading).strafeToLinearHeading(gateOpenPos.position, gateOpenPos.heading).strafeToLinearHeading(colletingPos.position, colletingPos.heading).build());
-                intake.closeGate();
-                intake.setIntakePower(1);
-                keepIntake=true;
+                //Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose())
+                  //      .strafeToLinearHeading(gatePos.position, gatePos.heading).build()); //.strafeToLinearHeading(colletingPos.position, colletingPos.heading)
+                //intake.closeGate();
+                //intake.setIntakePower(1);
+                //Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose()).strafeToLinearHeading(gateOpenPos.position, gateOpenPos.heading).build());
+                //keepIntake=true;
             } else if (gamepad1.yWasPressed()){
                 autoDrive = true;
 
-                Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose())
-                        .strafeToLinearHeading(loadingZone.position, loadingZone.heading).build());
+                //Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose())
+                   //     .strafeToLinearHeading(loadingZone.position, loadingZone.heading).build());
 
 
-            } else if (gamepad1.xWasPressed()){
+            } else if (gamepad1.aWasPressed()){
                 //hmmmmmm
                 //Pose2d curPose2D = drive.localizer.getPose();
                 autoDrive = true;
@@ -370,13 +378,13 @@ public class ForbiddenTeleOPBlueV2 extends LinearOpMode {
                 //   Actions.runBlocking(drive.actionBuilder(drive.localizer.getPose())
                 //           .strafeToLinearHeading(new Vector2d(38, -33), 0).build());//38,-33
                 // } else if (gamepad2.dpadLeftWasPressed()) {
-                Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose())
-                        .strafeToLinearHeading(targetPose.position, targetPose.heading).build());
+               // Actions.runBlocking(myDrive.actionBuilder(myDrive.localizer.getPose())
+                 //       .strafeToLinearHeading(targetPose.position, targetPose.heading).build());
                 // }
             } else  {
                 if (!autoDrive) {
                     Vector2d translation = new Vector2d((speedRatio * (-gamepad1.left_stick_y)), (speedRatio * (-gamepad1.left_stick_x)));
-                    double rotation = -0.55 * gamepad1.right_stick_x;
+                    double rotation = -0.15 * gamepad1.right_stick_x;
                     myDrive.setDrivePowers(new PoseVelocity2d(translation, rotation));
                 } else {
                     if (Math.abs(gamepad1.left_stick_y) > 0.01 || Math.abs(gamepad1.left_stick_x) > 0.01 || Math.abs(gamepad1.right_stick_x) > 0.01) {
@@ -485,7 +493,7 @@ public class ForbiddenTeleOPBlueV2 extends LinearOpMode {
 
     public static boolean isInShootingZone (Pose2d position){
         double line1A=-1;
-        double line1B=7;
+        double line1B=10;
         double line2A=1;
         double line2B=21;
         if ( (position.position.x<position.position.y*line1A+line1B) && (position.position.x<position.position.y*line2A+line2B)){

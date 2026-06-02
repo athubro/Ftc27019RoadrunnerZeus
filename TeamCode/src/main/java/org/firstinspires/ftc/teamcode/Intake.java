@@ -48,24 +48,24 @@ public final class Intake {
 
 
     //---------------front sensor -----------------
-    double frontColorHuePurpleBall = 210;
-    double frontColorHueGreenBall = 158;
-    double frontColorHueUpperBound = 20;
-    double frontColorHueLowerBound = -20;
-    double frontColorDis = 3.2;
+    double frontColorHuePurpleBall = 206;
+    double frontColorHueGreenBall = 152;//158
+    double frontColorHueUpperBound = 17;
+    double frontColorHueLowerBound = -32;//-26
+    double frontColorDis = 3.07;
     //-----------middle sensor ------------
-    double middleColorHuePurpleBall = 185;
-    double middleColorHueGreenBall = 152;
+    double middleColorHuePurpleBall = 175.5;//188;//163-188
+    double middleColorHueGreenBall = 149.5; //156-162
 
-    double middleColorHueUpperBound = 15;
-    double middleColorHueLowerBound = -15;
-    double middleColorDis = 13;
+    double middleColorHueUpperBound = 13;
+    double middleColorHueLowerBound = -12;
+    double middleColorDis = 9.7;//10
     //------------- back sensor -------------
-    double backColorHuePurpleBall = 209;
-    double backColorHueGreenBall = 160;
+    double backColorHuePurpleBall = 202;
+    double backColorHueGreenBall = 158;
     double backColorHueUpperBound = 13;
-    double backColorHueLowerBound = -13;
-    double backColorDis = 5.5;//5.5->4.6->4
+    double backColorHueLowerBound = -16;
+    double backColorDis = 5;//5.5->4.6->4
 
 
 
@@ -101,7 +101,7 @@ public final class Intake {
 
     // ==================== CONSTANTS ====================
     private static final double GATE_OPEN = 0.0;
-    private static final double GATE_CLOSED = 1.0;
+    private static final double GATE_CLOSED = 0.8;//1.0
 
     // ==================== STATE ====================
     private double intakePower = 0.0;
@@ -167,7 +167,7 @@ public final class Intake {
         storage[1] = detectColor(middleDis,middleHue, "middle");
         storage[0] = detectColor(backDis, backHue, "back");
         countBalls();
-        if (intakeTime.seconds() > 1.3) {
+        if (intakeTime.seconds() > 0.9) {
             pastIntakeTime = true;
 
         } else {
@@ -255,6 +255,9 @@ public final class Intake {
     public void resetAll(){
         middleCompartment.setPosition(0);
         topCompartment.setPosition(0);
+        firstStep = "N";
+        secondStep = "N";
+        ballsStored = false;
     }
 
 

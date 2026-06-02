@@ -288,12 +288,13 @@ public class ZeusTeleOPBlueV2 extends LinearOpMode {
             }
             if (gamepad2.left_trigger > 0.1) {
                 keepIntake=false;
+                intake.openGate();
                 intake.setIntakePower(gamepad2.left_trigger);  // Intake
                 if (ableResetTime) {
                     sortTimer.reset();
                     ableResetTime = false;
                 }
-                intake.openGate();
+
             } else {
                 ableResetTime = true;
             }
@@ -389,7 +390,7 @@ public class ZeusTeleOPBlueV2 extends LinearOpMode {
             } else  {
                 if (!autoDrive) {
                     Vector2d translation = new Vector2d((speedRatio * (-gamepad1.left_stick_y)), (speedRatio * (-gamepad1.left_stick_x)));
-                    double rotation = -0.6 * gamepad1.right_stick_x;
+                    double rotation = -0.5 * gamepad1.right_stick_x;
                     myDrive.setDrivePowers(new PoseVelocity2d(translation, rotation));
                 } else {
                     if (Math.abs(gamepad1.left_stick_y) > 0.01 || Math.abs(gamepad1.left_stick_x) > 0.01 || Math.abs(gamepad1.right_stick_x) > 0.01) {
@@ -498,7 +499,7 @@ public class ZeusTeleOPBlueV2 extends LinearOpMode {
 
     public static boolean isInShootingZone (Pose2d position){
         double line1A=-1;
-        double line1B=7;
+        double line1B=10;
         double line2A=1;
         double line2B=21;
         if ( (position.position.x<position.position.y*line1A+line1B) && (position.position.x<position.position.y*line2A+line2B)){

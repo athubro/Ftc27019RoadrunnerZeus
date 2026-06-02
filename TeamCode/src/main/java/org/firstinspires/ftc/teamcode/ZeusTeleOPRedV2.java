@@ -398,7 +398,7 @@ public class ZeusTeleOPRedV2 extends LinearOpMode {
             } else  {
                 if (!autoDrive) {
                     Vector2d translation = new Vector2d((speedRatio * (-gamepad1.left_stick_y)), (speedRatio * (-gamepad1.left_stick_x)));
-                    double rotation = -0.6 * gamepad1.right_stick_x;
+                    double rotation = -0.5 * gamepad1.right_stick_x;
                     myDrive.setDrivePowers(new PoseVelocity2d(translation, rotation));
                 } else {
                     if (Math.abs(gamepad1.left_stick_y) > 0.01 || Math.abs(gamepad1.left_stick_x) > 0.01 || Math.abs(gamepad1.right_stick_x) > 0.01) {
@@ -444,6 +444,16 @@ public class ZeusTeleOPRedV2 extends LinearOpMode {
             telemetry.addData("slot 0 ",intake.storage[0]);
             telemetry.addData("slot 1 ",intake.storage[1]);
             telemetry.addData("slot 2 ",intake.storage[2]);
+            telemetry.addData("first step ",intake.firstStep);
+            telemetry.addData("second step ",intake.secondStep);
+            telemetry.addLine();
+            telemetry.addLine("=== colorSensors ===");
+            telemetry.addData("frontHue ",intake.frontHue);
+            telemetry.addData("frontDis ",intake.frontDis);
+            telemetry.addData("middleHue ",intake.middleHue);
+            telemetry.addData("middleDis ",intake.middleDis);
+            telemetry.addData("backHue ",intake.backHue);
+            telemetry.addData("BackDIs ",intake.backDis);
 
             telemetry.addLine("=== DRIVE ===");
             telemetry.addData("Speed Mode", speedRatio == 1.0 ? "FAST" : (speedRatio == 0.3 ? "SLOW" : "NORMAL"));

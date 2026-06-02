@@ -493,7 +493,7 @@ public final class Turret {
                     errorAngleDeg = fid.getTargetXDegrees();
                     measureDistance();
                     //????????================================================================================
-                    if (disToAprilTag > 95) {
+                    if (disToAprilTag > 90 && drive.localizer.getPose().position.x >20) {
                         targetAngle = LLFarZoneOffset;
                     } else {
                         targetAngle = 0;
@@ -721,12 +721,12 @@ public final class Turret {
         if (tagFound) {
            // targetRPM = 11.6 * x + 1650 - velocityCorFactor * velocityTowardGoal;
 
-            if (x<95) {
+            if (x<80 && drive.localizer.getPose().position.x<30) {
                // targetRPM = 11.6 * x + 1650 - velocityCorFactor * velocityTowardGoal;
-                targetRPM = 10.4 * x + 1900 - velocityCorFactor * velocityTowardGoal;
+                targetRPM = 10.4 * x + 1860 - velocityCorFactor * velocityTowardGoal; //1910
             } else {
               //  targetRPM = 11.6 * x + 1720 - velocityCorFactor * velocityTowardGoal;
-                targetRPM = 10.4 * x + 2000 - velocityCorFactor * velocityTowardGoal;
+                targetRPM = 11 * x + 2150 - velocityCorFactor * velocityTowardGoal;
 
             }
 
@@ -739,7 +739,7 @@ public final class Turret {
         double x = disToAprilTag;
         if (tagFound) {
             double shooterAngleSetting;
-            if (x < 95) {
+            if (x < 85) {
                 //shooterAngleSetting = 1.76*0.001*x-0.0829;
                 shooterAngleSetting = -1.25 + 0.0681*x - 0.000781*x*x + 0.00000293*x*x*x;
             } else {

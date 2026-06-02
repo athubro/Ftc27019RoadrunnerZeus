@@ -24,7 +24,7 @@ public class ZeusRedNearZoneV1 extends LinearOpMode {
     private Pose2d firstSpikeEnd = new Pose2d(-16.574, 41.1757, Math.toRadians(90.924));
 
     private Pose2d firstSpikeFurther = new Pose2d(-16.5344, 46.313, Math.toRadians(90.07));
-    private Pose2d secondSpikeStart = new Pose2d(3.915, 21.7272, Math.toRadians(80.22));
+    private Pose2d secondSpikeStart = new Pose2d(3.915, 17.7272, Math.toRadians(80.22));
     private Pose2d secondSpikeEnd = new Pose2d(6.746, 47.138, Math.toRadians(89.12));
     private Pose2d secondSpikeFurther = new Pose2d(6.746, 51.7, Math.toRadians(90.4));
     private Pose2d gatePrepare = new Pose2d(7.5839, 45.11, Math.toRadians(123.18));
@@ -37,7 +37,7 @@ public class ZeusRedNearZoneV1 extends LinearOpMode {
     private Pose2d thirdSpikeEnd = new Pose2d(29.7, 41.75, Math.toRadians(92.6));
 
     private Pose2d thirdSpikeFurther = new Pose2d(29.8,50 , Math.toRadians(94.3));
-    private Pose2d park = new Pose2d(-0.3, 40.8, Math.toRadians(16));
+    private Pose2d park = new Pose2d(-16.7, 46.9, Math.toRadians(90));//-0.3, 40.8, Math.toRadians(16)
     private Pose2d finalShootingPos = new Pose2d(-40.8958, 8.795, Math.toRadians(110.458));
     //private Vector2d fina = new Vector2d(-35.4,-19);
     //private double secondShootingHeading = Math.toRadians(50);
@@ -67,7 +67,7 @@ public class ZeusRedNearZoneV1 extends LinearOpMode {
         myRobot = new SSMyRobot(hardwareMap, drive, intake, turretSystem, startPose);
         turretSystem.LLFarZoneOffset = -2;
         turretSystem.targetPos = new Vector2d(-53, 60);
-        Actions.runBlocking (myRobot.setTurretAnlge(12));
+        //Actions.runBlocking (myRobot.setTurretAnlge(12));
         turretSystem.targetRPM=2500;
 
         turretSystem.targetRPM=2500;
@@ -76,7 +76,7 @@ public class ZeusRedNearZoneV1 extends LinearOpMode {
         turretSystem.updateTurretPID();
         turretSystem.updateTurretVelocity(400);
         turretSystem.continuousTracking=true;
-
+        turretSystem.manualTurretAngle(12);
         waitForStart();
 
         intake.generalTimerReset();

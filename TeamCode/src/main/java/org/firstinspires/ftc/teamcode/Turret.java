@@ -537,7 +537,7 @@ public final class Turret {
                 previousDesiredDeg=200;
             }
             return;
-        }
+        }//
 
         errorDeg = errorAngleDeg - targetAngle;
         // Low-pass filter for smooth response
